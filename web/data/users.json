@@ -1,0 +1,12 @@
+{
+    "admin": {
+        "password": "$2y$10$t0IRlEoNiuxGeHvgnwmRO.KMeJLBbrWQdbpUkrWQ.BSl9ZTHjppB.",
+        "created_at": 1776675256,
+        "reset_token": null
+    },
+    "Ichiro": {
+        "password": "$2y$10$EBstMeCr76F7HK.yOwgh6.rLWbJlbKkkuoOjqrJz3r\/ETWMyCEGi.",
+        "created_at": 1776739060,
+        "reset_token": null
+    }
+}

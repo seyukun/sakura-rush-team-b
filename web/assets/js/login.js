@@ -42,7 +42,7 @@
         // セッションクッキーがサーバー側で設定されるため、
         // ローカルストレージには保存せず直接リダイレクト
         setTimeout(() => {
-          window.location.href = 'dashboard.php';
+          window.location.href = 'pages/dashboard/';
         }, 500);
       } else {
         // ログイン失敗

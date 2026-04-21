@@ -14,12 +14,12 @@ if (empty($_SESSION['logged_in']) || empty($_SESSION['user_name'])) {
         echo json_encode([
             'success' => false,
             'message' => 'ログインが必要です',
-            'redirect' => 'index.php'
+            'redirect' => BASE_URL . '/index.php'
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
     // 通常のリクエストはリダイレクト
-    header('Location: index.php');
+    header('Location: ' . BASE_URL . '/index.php');
     exit;
 }
 
@@ -27,7 +27,7 @@ if (empty($_SESSION['logged_in']) || empty($_SESSION['user_name'])) {
 $timeout = 24 * 60 * 60;
 if (time() - $_SESSION['login_time'] > $timeout) {
     session_destroy();
-    header('Location: index.php');
+    header('Location: ' . BASE_URL . '/index.php');
     exit;
 }
 

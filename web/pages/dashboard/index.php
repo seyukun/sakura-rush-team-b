@@ -1,18 +1,19 @@
 <?php
 // セッション保護をチェック
-require_once 'protect.php';
+require_once '../../includes/protect.php';
 ?><!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <title>ダッシュボード – 管理パネル</title>
-  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body class="dashboard">
   <!-- ① サイドバー -->
   <nav class="sidebar">
     <h2 style="margin-bottom:2rem;text-align:center;">Admin</h2>
-    <a href="#" class="active">ダッシュボード</a>
+    <a href="../dashboard/" class="active">ダッシュボード</a>
+    <a href="../account-settings/">アカウント設定</a>
     <a href="#">メール設定</a>
     <a href="#">FTP 管理</a>
     <a href="#" id="logout">ログアウト</a>
@@ -42,6 +43,6 @@ require_once 'protect.php';
     </div>
   </section>
 
-  <script src="./assets/js/dashboard.js"></script>
+  <script src="../../assets/js/dashboard.js"></script>
 </body>
 </html>

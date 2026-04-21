@@ -4,11 +4,11 @@
  * 既にログイン済みならダッシュボードへリダイレクト
  */
 
-require_once 'config.php';
+require_once 'includes/config.php';
 
 // セッションをチェック、既にログイン済みならダッシュボードへ
 if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_name'])) {
-    header('Location: dashboard.php');
+    header('Location: pages/dashboard/');
     exit;
 }
 ?><!DOCTYPE html>
@@ -36,6 +36,10 @@ if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_name'])) {
       <button type="submit" class="btn" style="width:100%;margin-top:1.5rem;">ログイン</button>
     </form>
     <p id="msg" style="color:#e11d48;margin-top:0.75rem;font-size:0.9rem;"></p>
+    <div class="form-links" style="margin-top:1rem;text-align:center;">
+      <a href="pages/register/" style="margin-right:1rem;">アカウント作成</a>
+      <a href="pages/reset/">パスワードを忘れた場合</a>
+    </div>
   </div>
 
   <script src="./assets/js/login.js"></script>
