@@ -37,6 +37,6 @@ if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_name'])) {
     </div>
   </div>
 
-  <script src="../../assets/js/register.js"></script>
+  <script src="js/register.js"></script>
 </body>
 </html>

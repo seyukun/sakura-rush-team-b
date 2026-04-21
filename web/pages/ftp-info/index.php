@@ -5,18 +5,18 @@ require_once '../../includes/protect.php';
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ダッシュボード – 管理パネル</title>
+  <title>FTP Information – 管理パネル</title>
   <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body class="dashboard">
   <!-- ① サイドバー -->
   <nav class="sidebar">
     <h2 style="margin-bottom:2rem;text-align:center;">Admin</h2>
-    <a href="../dashboard/" class="active">ダッシュボード</a>
+    <a href="../dashboard/">ダッシュボード</a>
     <a href="../web-hosting/">Web Hosting</a>
     <a href="../file-manager/">File Manager</a>
     <a href="../php-db-settings/">PHP / DB 設定</a>
-    <a href="../ftp-info/">FTP Information</a>
+    <a href="../ftp-info/" class="active">FTP Information</a>
     <a href="../mail-hosting/">Mail Hosting</a>
     <a href="../account-settings/">アカウント設定</a>
     <a href="../help/">Help</a>
@@ -25,25 +25,18 @@ require_once '../../includes/protect.php';
 
   <!-- ② メインコンテンツ -->
   <section class="main-content">
-    <h1 style="margin-bottom:1.5rem;">ようこそ <span id="userName"></span> さん</h1>
-
-    <div class="cards-grid">
-      <div class="card">
-        <h3>サイト数</h3>
-        <p style="font-size:2rem;margin-top:0.5rem;">3</p>
-      </div>
-      <div class="card">
-        <h3>メールアカウント</h3>
-        <p style="font-size:2rem;margin-top:0.5rem;">12</p>
-      </div>
-      <div class="card">
-        <h3>ディスク使用率</h3>
-        <p style="font-size:2rem;margin-top:0.5rem;">68%</p>
-      </div>
-      <div class="card">
-        <h3>CPU 負荷</h3>
-        <p style="font-size:2rem;margin-top:0.5rem;">23%</p>
-      </div>
+    <h1>FTP Information</h1>
+    <p>ここではFTP接続情報を表示します。</p>
+    <div class="card">
+      <h3>接続情報</h3>
+      <p><strong>ホスト:</strong> ftp.example.com</p>
+      <p><strong>ポート:</strong> 21</p>
+      <p><strong>ユーザ名:</strong> yourusername</p>
+      <p><strong>パスワード:</strong> ********</p>
+    </div>
+    <div class="card">
+      <h3>クライアント設定</h3>
+      <p>FileZillaなどのFTPクライアントを使って接続してください。</p>
     </div>
   </section>
 

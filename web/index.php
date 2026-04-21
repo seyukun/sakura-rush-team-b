@@ -42,6 +42,6 @@ if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_name'])) {
     </div>
   </div>
 
-  <script src="./assets/js/login.js"></script>
+  <script src="./js/login.js"></script>
 </body>
 </html>

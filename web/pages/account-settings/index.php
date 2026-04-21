@@ -13,9 +13,13 @@ require_once '../../includes/protect.php';
   <nav class="sidebar">
     <h2 style="margin-bottom:2rem;text-align:center;">Admin</h2>
     <a href="../dashboard/">ダッシュボード</a>
+    <a href="../web-hosting/">Web Hosting</a>
+    <a href="../file-manager/">File Manager</a>
+    <a href="../php-db-settings/">PHP / DB 設定</a>
+    <a href="../ftp-info/">FTP Information</a>
+    <a href="../mail-hosting/">Mail Hosting</a>
     <a href="../account-settings/" class="active">アカウント設定</a>
-    <a href="#">メール設定</a>
-    <a href="#">FTP 管理</a>
+    <a href="../help/">Help</a>
     <a href="#" id="logout">ログアウト</a>
   </nav>
 
@@ -55,7 +59,7 @@ require_once '../../includes/protect.php';
     </div>
   </section>
 
-  <script src="../../assets/js/dashboard.js"></script>
-  <script src="../../assets/js/account-settings.js"></script>
+  <script src="../dashboard/js/dashboard.js"></script>
+  <script src="js/account-settings.js"></script>
 </body>
 </html>
