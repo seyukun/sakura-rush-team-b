@@ -18,11 +18,23 @@ $relativePath = str_replace($webRootFs, '', $scriptFilename);
 $baseUrl = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($relativePath));
 define('BASE_URL', rtrim($baseUrl, '/'));
 
-// デモ用ユーザーデータベース（本番ではデータベースから取得）
-// 実運用ではこれを削除し、データベースから認証情報を取得する
-$DEMO_USERS = array(
-    'admin' => password_hash('admin123', PASSWORD_BCRYPT)
-);
+// MySQLi接続設定
+$db_host = 'localhost';
+$db_user = 'root';
+$db_pass = '';
+$db_name = 'test';
+
+// MySQLi接続
+$mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+// 接続エラーチェック
+if ($mysqli->connect_error) {
+    error_log('Database connection error: ' . $mysqli->connect_error);
+    die(json_encode(['success' => false, 'message' => 'データベース接続エラーが発生しました']));
+}
+
+// 文字セット設定
+$mysqli->set_charset('utf8mb4');
 
 // レスポンスヘッダー設定（CORS対応）
 header('X-Content-Type-Options: nosniff');

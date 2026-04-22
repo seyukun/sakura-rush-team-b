@@ -23,6 +23,9 @@ if (!empty($_SESSION['logged_in']) && !empty($_SESSION['user_name'])) {
       <label for="username">ユーザ名</label>
       <input type="text" id="username" name="username" class="input" required placeholder="admin">
 
+      <label style="margin-top:1rem;" for="email">メールアドレス</label>
+      <input type="email" id="email" name="email" class="input" required placeholder="admin@example.com">
+
       <label style="margin-top:1rem;" for="password">パスワード</label>
       <input type="password" id="password" name="password" class="input" required placeholder="********">
 

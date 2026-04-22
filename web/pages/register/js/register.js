@@ -1,4 +1,4 @@
-/* assets/js/register.js */
+/* pages/register/js/register.js */
 (() => {
   const form = document.getElementById('registerForm');
   const msg = document.getElementById('msg');
@@ -13,6 +13,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: form.username.value.trim(),
+        email: form.email.value.trim(),
         password: form.password.value,
         confirm_password: form.confirm_password.value
       })
