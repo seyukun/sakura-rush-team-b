@@ -19,10 +19,10 @@ $baseUrl = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($relativePath));
 define('BASE_URL', rtrim($baseUrl, '/'));
 
 // MySQLi接続設定
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'test';
+$db_host = 'teamb.tidb-tk1.db.sakurausercontent.com';
+$db_user = 'teamb';
+$db_pass = 'muKBxHk2jxWAU8h9ZZsX';
+$db_name = 'teamb';
 
 // MySQLi接続
 $mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
