@@ -33,7 +33,7 @@ need_cmd() {
 }
 
 cexec_sh() {
-  sudo /home/ubuntu/scratch-container exec "$CTR_ID" bash -lc "$1"
+  sudo ${HOME}/scratch-container exec "$CTR_ID" bash -lc "$1"
 }
 
 iptables_delete_if_exists() {

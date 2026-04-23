@@ -57,12 +57,12 @@ need_cmd() {
 
 # execute command in container
 cexec() {
-  sudo /home/ubuntu/scratch-container exec "$CTR_ID" "$@"
+  sudo ${HOME}/scratch-container exec "$CTR_ID" "$@"
 }
 
 # execute shell command in container
 cexec_sh() {
-  sudo /home/ubuntu/scratch-container exec "$CTR_ID" bash -lc "$1"
+  sudo ${HOME}/scratch-container exec "$CTR_ID" bash -lc "$1"
 }
 
 # add iptables rule if not exists

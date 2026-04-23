@@ -10,6 +10,7 @@
 ```sh
 $ ./sftp_init_start.sh <container_id> <container_ip> <host_port> <sftp_user> <sftp_pass> [ext_if] [bridge_if]
 $ ./sftp_clean.sh <container_id> <container_ip> <host_port> [ext_if] [bridge_if]
+$ ./sftp_passwd.sh <container_id> <sftp_user> <new_passwod>
 ```
 
 具体例
@@ -40,4 +41,6 @@ $ ./sftp_clean.sh test_sftp1 10.200.1.20 10023 ens3
 [1/3] remove DNAT + FORWARD
 [2/3] stop sshd in container
 [3/3] done
+
+$ ./sftp_passwd.sh test_sftp1 sftpuser NewSecretPass123
 ```
