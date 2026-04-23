@@ -10,18 +10,7 @@ require_once '../../includes/protect.php';
 </head>
 <body class="dashboard">
   <!-- ① サイドバー -->
-  <nav class="sidebar">
-    <h2 style="margin-bottom:2rem;text-align:center;">Admin</h2>
-    <a href="../dashboard/">ダッシュボード</a>
-    <a href="../web-hosting/" class="active">Web Hosting</a>
-    <a href="../file-manager/">File Manager</a>
-    <a href="../php-db-settings/">PHP / DB 設定</a>
-    <a href="../ftp-info/">FTP Information</a>
-    <a href="../mail-hosting/">Mail Hosting</a>
-    <a href="../account-settings/">アカウント設定</a>
-    <a href="../help/">Help</a>
-    <a href="#" id="logout">ログアウト</a>
-  </nav>
+  <?php include '../../includes/sidebar.php'; ?>
 
   <!-- ② メインコンテンツ -->
   <section class="main-content">

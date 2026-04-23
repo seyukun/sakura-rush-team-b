@@ -34,6 +34,37 @@
       userNameEl.textContent = data.username;
     }
 
+    // ---- 2.5️⃣ SFTP接続情報を取得 ----
+    async function loadSftpInfo() {
+      try {
+        const response = await fetch('../../api/sftp-info.php?action=info', {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        const sftpData = await response.json();
+
+        if (response.ok && sftpData.success) {
+          const portEl = document.getElementById('sftpPort');
+          const passwordEl = document.getElementById('sftpPassword');
+          
+          if (portEl) portEl.textContent = sftpData.sftp_port;
+          if (passwordEl) passwordEl.textContent = sftpData.sftp_password;
+        } else {
+          console.warn('SFTP info API error:', sftpData);
+          const portEl = document.getElementById('sftpPort');
+          if (portEl) portEl.innerHTML = `<span style="color: red;">エラー: ${sftpData.message || 'SFTP情報取得エラー'}</span>`;
+        }
+      } catch (error) {
+        console.error('SFTP info fetch error:', error);
+        const portEl = document.getElementById('sftpPort');
+        if (portEl) portEl.innerHTML = `<span style="color: red;">エラー: ${error.message}</span>`;
+      }
+    }
+
+    // SFTP情報を読み込む
+    loadSftpInfo();
+
     // ---- 3️⃣ ログアウト処理 ----
     const logoutEl = document.getElementById('logout');
     if (logoutEl) {

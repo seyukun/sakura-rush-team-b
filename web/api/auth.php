@@ -71,6 +71,7 @@ if ($method === 'GET' && $action === 'status') {
         sendJson([
             'success' => true,
             'logged_in' => true,
+            'user_id' => $_SESSION['user_id'],
             'username' => $_SESSION['user_name']
         ], 200);
     } else {

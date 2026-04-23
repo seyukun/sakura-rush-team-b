@@ -34,6 +34,32 @@
       userNameEl.textContent = data.username;
     }
 
+    // ---- 2.5️⃣ メールアカウント数を取得 ----
+    async function loadMailCount() {
+      try {
+        const response = await fetch('../../api/mail-hosting.php?action=count', {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        const mailData = await response.json();
+
+        if (response.ok && mailData.success) {
+          const mailCountEl = document.getElementById('mailCount');
+          if (mailCountEl) {
+            mailCountEl.textContent = mailData.count;
+          }
+        } else {
+          console.warn('Mail count API error:', mailData);
+        }
+      } catch (error) {
+        console.error('Mail count fetch error:', error);
+      }
+    }
+
+    // メール数を読み込む
+    loadMailCount();
+
     // ---- 3️⃣ ログアウト処理 ----
     const logoutEl = document.getElementById('logout');
     if (logoutEl) {
