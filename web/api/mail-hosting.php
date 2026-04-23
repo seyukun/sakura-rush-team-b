@@ -56,16 +56,40 @@ if ($method === 'GET' && $action === 'list') {
     ], 200);
 }
 
+// ドメイン一覧を取得
+if ($method === 'GET' && $action === 'domains') {
+    $stmt = $mysqli->prepare('SELECT id, name FROM email_domains WHERE user_id = ? AND active = 1 ORDER BY name');
+    if (!$stmt) {
+        sendJson(['success' => false, 'message' => 'データベースエラーが発生しました'], 500);
+    }
+
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $domains = [];
+    while ($row = $result->fetch_assoc()) {
+        $domains[] = $row;
+    }
+    $stmt->close();
+
+    sendJson([
+        'success' => true,
+        'domains' => $domains
+    ], 200);
+}
+
 // メールアカウントを作成
 if ($method === 'POST' && $action === 'create') {
     $input = json_decode(file_get_contents('php://input'), true);
     
-    if (empty($input['email']) || empty($input['domain_id'])) {
-        sendJson(['success' => false, 'message' => 'メールアドレスとドメインは必須です'], 400);
+    if (empty($input['email']) || empty($input['domain_id']) || empty($input['password'])) {
+        sendJson(['success' => false, 'message' => 'メールアドレス、ドメイン、パスワードは必須です'], 400);
     }
 
     $email = trim($input['email']);
     $domain_id = (int)$input['domain_id'];
+    $password = password_hash($input['password'], PASSWORD_BCRYPT);
 
     // メールアドレスの重複チェック
     $stmt = $mysqli->prepare('SELECT id FROM email_users WHERE email = ? AND user_id = ?');
@@ -84,7 +108,6 @@ if ($method === 'POST' && $action === 'create') {
     $stmt->close();
 
     // メールアカウントを作成
-    $password = bin2hex(random_bytes(8));
     $stmt = $mysqli->prepare('INSERT INTO email_users (domain_id, user_id, email, password) VALUES (?, ?, ?, ?)');
     if (!$stmt) {
         sendJson(['success' => false, 'message' => 'データベースエラーが発生しました'], 500);
@@ -97,8 +120,7 @@ if ($method === 'POST' && $action === 'create') {
         sendJson([
             'success' => true,
             'message' => 'メールアカウントを作成しました',
-            'id' => $mysqli->insert_id,
-            'password' => $password
+            'id' => $mysqli->insert_id
         ], 201);
     } else {
         $stmt->close();
