@@ -18,11 +18,27 @@ $relativePath = str_replace($webRootFs, '', $scriptFilename);
 $baseUrl = substr($_SERVER['SCRIPT_NAME'], 0, -strlen($relativePath));
 define('BASE_URL', rtrim($baseUrl, '/'));
 
-// MySQLi接続設定
-$db_host = 'teamb.tidb-tk1.db.sakurausercontent.com';
-$db_user = 'teamb';
-$db_pass = 'muKBxHk2jxWAU8h9ZZsX';
-$db_name = 'teamb';
+// .envファイルを読み込む簡易パーサー
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue; // コメントをスキップ
+        if (strpos($line, '=') !== false) {
+            list($name, $value) = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value, " \t\n\r\0\x0B\"'"); // クォーテーションや空白を削除
+            $_ENV[$name] = $value;
+            putenv("$name=$value");
+        }
+    }
+}
+
+// MySQLi接続設定 (環境変数から取得)
+$db_host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+$db_user = $_ENV['DB_USER'] ?? 'root';
+$db_pass = $_ENV['DB_PASS'] ?? '';
+$db_name = $_ENV['DB_NAME'] ?? 'teamb';
 
 // MySQLi接続
 $mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
