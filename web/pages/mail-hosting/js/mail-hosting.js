@@ -84,7 +84,11 @@
     try {
       const response = await fetch('../../api/mail-hosting.php?action=delete', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // クッキーを含める
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': window.csrfToken
+        },
         body: JSON.stringify({ id })
       });
       const data = await response.json();
@@ -123,7 +127,11 @@
       try {
         const response = await fetch('../../api/mail-hosting.php?action=create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // クッキーを含める
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': window.csrfToken
+          },
           body: JSON.stringify({
             email: email,
             domain_id: parseInt(domainId, 10),

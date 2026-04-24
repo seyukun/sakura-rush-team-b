@@ -28,6 +28,9 @@
   checkSession().then(data => {
     if (!data) return;
 
+    // APIから取得したCSRFトークンを保持する
+    window.csrfToken = data.csrf_token;
+
     // ---- 2️⃣ 表示するユーザ名 ----
     const userNameEl = document.getElementById('userName');
     if (userNameEl) {
@@ -74,7 +77,11 @@
         try {
           const response = await fetch('../../api/auth.php?action=logout', {
             method: 'POST',
-            credentials: 'include' // クッキーを含める
+            credentials: 'include', // クッキーを含める
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': window.csrfToken
+            }
           });
 
           if (response.ok) {

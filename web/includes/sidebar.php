@@ -10,7 +10,14 @@ $navItems = [
     ['href' => BASE_URL . '/pages/account-settings/', 'label' => 'アカウント設定', 'dir' => 'account-settings'],
     ['href' => BASE_URL . '/pages/help/', 'label' => 'Help', 'dir' => 'help'],
 ];
+
+// CSRFトークンを生成・取得
+$csrf_token = generateCsrfToken();
 ?>
+<script>
+  // フロントエンドからのAPIリクエスト用にCSRFトークンをグローバル変数として保持
+  window.csrfToken = "<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>";
+</script>
 <nav class="sidebar">
   <h2 style="margin-bottom:2rem;text-align:center;">Admin</h2>
   <?php foreach ($navItems as $item): ?>

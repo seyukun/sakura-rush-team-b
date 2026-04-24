@@ -42,6 +42,9 @@ if ($method === 'POST' && $action === 'login') {
         sendJson(['success' => false, 'message' => 'ユーザ名またはパスワードが違います'], 401);
     }
 
+    // セッション固定攻撃対策：ログイン成功時にセッションIDを再生成
+    session_regenerate_id(true);
+
     // セッション設定
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_name'] = $user['username'];
@@ -57,6 +60,12 @@ if ($method === 'POST' && $action === 'login') {
 
 // ログアウト処理
 if ($method === 'POST' && $action === 'logout') {
+    $input = json_decode(file_get_contents('php://input'), true) ?: [];
+    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
+    if (!verifyCsrfToken($csrf_token)) {
+        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
+    }
+
     $_SESSION = [];
     session_destroy();
     sendJson([
@@ -72,7 +81,8 @@ if ($method === 'GET' && $action === 'status') {
             'success' => true,
             'logged_in' => true,
             'user_id' => $_SESSION['user_id'],
-            'username' => $_SESSION['user_name']
+            'username' => $_SESSION['user_name'],
+            'csrf_token' => $_SESSION['csrf_token'] ?? ''
         ], 200);
     } else {
         sendJson([
@@ -155,7 +165,7 @@ if ($method === 'POST' && $action === 'reset-request') {
 
     if ($result->num_rows === 0) {
         $stmt->close();
-        sendJson(['success' => false, 'message' => 'ユーザが存在しません'], 400);
+        sendJson(['success' => false, 'message' => '入力されたユーザ情報に誤りがあります'], 400);
     }
     $stmt->close();
 
@@ -190,7 +200,7 @@ if ($method === 'POST' && $action === 'reset-password') {
 
     if ($result->num_rows === 0) {
         $stmt->close();
-        sendJson(['success' => false, 'message' => 'ユーザが存在しません'], 400);
+        sendJson(['success' => false, 'message' => '入力されたユーザ情報に誤りがあります'], 400);
     }
     $stmt->close();
 
@@ -218,6 +228,12 @@ if ($method === 'POST' && $action === 'change-password') {
     }
     
     $input = json_decode(file_get_contents('php://input'), true);
+    
+    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
+    if (!verifyCsrfToken($csrf_token)) {
+        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
+    }
+
     if (empty($input['current_password']) || empty($input['new_password']) || empty($input['confirm_password'])) {
         sendJson(['success' => false, 'message' => 'すべての項目を入力してください'], 400);
     }
@@ -276,6 +292,12 @@ if ($method === 'POST' && $action === 'delete-account') {
     }
 
     $input = json_decode(file_get_contents('php://input'), true);
+    
+    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
+    if (!verifyCsrfToken($csrf_token)) {
+        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
+    }
+
     if (empty($input['password'])) {
         sendJson(['success' => false, 'message' => 'パスワードを入力してください'], 400);
     }

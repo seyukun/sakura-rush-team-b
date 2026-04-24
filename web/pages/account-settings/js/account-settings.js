@@ -9,7 +9,11 @@
   async function postJson(action, body) {
     const response = await fetch(`../../api/auth.php?action=${action}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // クッキーを含める
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': window.csrfToken
+      },
       body: JSON.stringify(body)
     });
     return response.json();
