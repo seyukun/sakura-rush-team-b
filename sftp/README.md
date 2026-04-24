@@ -25,10 +25,10 @@ $ ./sftp_init_start.sh test_sftp1 10.200.1.20 10023 sftpuser testpass ens3
 [5/5] done
 
 SFTP endpoint:
-  Host: 219.94.242.197
+  Host: ******
   Port: 10023
   User: sftpuser
-  Example: sftp -P 10023 sftpuser@219.94.242.197
+  Example: sftp -P 10023 sftpuser@******
 
 Container:
   id: test_sftp1
