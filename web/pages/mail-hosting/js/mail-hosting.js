@@ -9,8 +9,7 @@
   async function loadDomains() {
     if (!domainSelect) return;
     try {
-      const response = await fetch('../../api/mail-hosting.php?action=domains');
-      const data = await response.json();
+      const data = await window.apiFetch('../../api/mail-hosting.php?action=domains');
       
       if (data.success) {
         domainSelect.innerHTML = '';
@@ -36,8 +35,7 @@
   // メール一覧を取得して表示する関数
   async function loadMails() {
     try {
-      const response = await fetch('../../api/mail-hosting.php?action=list');
-      const data = await response.json();
+      const data = await window.apiFetch('../../api/mail-hosting.php?action=list');
       
       if (data.success) {
         mailList.innerHTML = '';
@@ -82,16 +80,10 @@
     if (!confirm('本当にこのメールアドレスを削除しますか？')) return;
     
     try {
-      const response = await fetch('../../api/mail-hosting.php?action=delete', {
+      const data = await window.apiFetch('../../api/mail-hosting.php?action=delete', {
         method: 'DELETE',
-        credentials: 'include', // クッキーを含める
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': window.csrfToken
-        },
         body: JSON.stringify({ id })
       });
-      const data = await response.json();
       
       if (data.success) {
         loadMails();
@@ -125,20 +117,14 @@
       const email = `${mailUser}@${domainName}`;
       
       try {
-        const response = await fetch('../../api/mail-hosting.php?action=create', {
+        const data = await window.apiFetch('../../api/mail-hosting.php?action=create', {
           method: 'POST',
-          credentials: 'include', // クッキーを含める
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': window.csrfToken
-          },
           body: JSON.stringify({
             email: email,
             domain_id: parseInt(domainId, 10),
             password: password
           })
         });
-        const data = await response.json();
         
         mailMsg.textContent = data.message;
         mailMsg.style.color = data.success ? '#10b981' : '#e11d48';

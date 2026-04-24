@@ -1,12 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // ステータスの初期読み込み
     try {
-        const res = await fetch('../../api/web-hosting.php?action=status');
-        const json = await res.json();
-        if (json.success && json.data) {
+        const data = await window.apiFetch('../../api/web-hosting.php?action=status');
+        if (data.success && data.data) {
             const phpVersionSelect = document.getElementById('phpVersion');
-            if (phpVersionSelect && json.data.php_version) {
-                phpVersionSelect.value = json.data.php_version;
+            if (phpVersionSelect && data.data.php_version) {
+                phpVersionSelect.value = data.data.php_version;
             }
         }
     } catch (e) {
@@ -27,12 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             wpMsg.textContent = `${domain} へのインストール準備中...`;
 
             try {
-                const response = await fetch('../../api/web-hosting.php?action=install-wp', {
+                const result = await window.apiFetch('../../api/web-hosting.php?action=install-wp', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ domain, title })
                 });
-                const result = await response.json();
                 
                 if (result.success) {
                     wpMsg.style.color = 'green';
@@ -69,12 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             phpMsg.textContent = '更新中...';
 
             try {
-                const response = await fetch('../../api/web-hosting.php?action=update-php', {
+                const result = await window.apiFetch('../../api/web-hosting.php?action=update-php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ version })
                 });
-                const result = await response.json();
                 
                 if (result.success) {
                     phpMsg.style.color = 'green';

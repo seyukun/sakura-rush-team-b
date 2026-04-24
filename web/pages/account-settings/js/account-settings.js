@@ -6,17 +6,8 @@
   const delForm = document.getElementById('deleteAccountForm');
   const delMsg = document.getElementById('delMsg');
 
-  async function postJson(action, body) {
-    const response = await fetch(`../../api/auth.php?action=${action}`, {
-      method: 'POST',
-      credentials: 'include', // クッキーを含める
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': window.csrfToken
-      },
-      body: JSON.stringify(body)
-    });
-    return response.json();
+  function postJson(action, body) {
+    return window.apiFetch(`../../api/auth.php?action=${action}`, { method: 'POST', body: JSON.stringify(body) });
   }
 
   if (pwdForm) {

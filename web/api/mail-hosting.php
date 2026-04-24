@@ -4,25 +4,7 @@
  * RESTful APIエンドポイント
  */
 
-require_once '../includes/config.php';
-
-if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
-    sendJson(['success' => false, 'message' => 'ログインが必要です'], 401);
-}
-
-$method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-
-// POST / DELETE リクエストのCSRFトークン検証
-if ($method === 'POST' || $method === 'DELETE') {
-    $input = json_decode(file_get_contents('php://input'), true) ?: [];
-    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
-    if (!verifyCsrfToken($csrf_token)) {
-        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
-    }
-}
-
-$user_id = $_SESSION['user_id'];
+require_once '../includes/api_middleware.php';
 
 // メールアカウント数を取得
 if ($method === 'GET' && $action === 'count') {

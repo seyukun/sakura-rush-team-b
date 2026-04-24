@@ -9,6 +9,16 @@ require_once '../includes/config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
+// CSRF検証用ヘルパー関数
+function requireCsrfToken($input = null) {
+    if ($input === null) $input = json_decode(file_get_contents('php://input'), true) ?: [];
+    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
+    if (!verifyCsrfToken($csrf_token)) {
+        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
+    }
+    return $input;
+}
+
 // ログイン処理
 if ($method === 'POST' && $action === 'login') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -60,11 +70,7 @@ if ($method === 'POST' && $action === 'login') {
 
 // ログアウト処理
 if ($method === 'POST' && $action === 'logout') {
-    $input = json_decode(file_get_contents('php://input'), true) ?: [];
-    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
-    if (!verifyCsrfToken($csrf_token)) {
-        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
-    }
+    requireCsrfToken();
 
     $_SESSION = [];
     session_destroy();
@@ -227,12 +233,7 @@ if ($method === 'POST' && $action === 'change-password') {
         sendJson(['success' => false, 'message' => 'ログインが必要です'], 401);
     }
     
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
-    if (!verifyCsrfToken($csrf_token)) {
-        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
-    }
+    $input = requireCsrfToken();
 
     if (empty($input['current_password']) || empty($input['new_password']) || empty($input['confirm_password'])) {
         sendJson(['success' => false, 'message' => 'すべての項目を入力してください'], 400);
@@ -291,12 +292,7 @@ if ($method === 'POST' && $action === 'delete-account') {
         sendJson(['success' => false, 'message' => 'ログインが必要です'], 401);
     }
 
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    $csrf_token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($input['csrf_token'] ?? '');
-    if (!verifyCsrfToken($csrf_token)) {
-        sendJson(['success' => false, 'message' => '不正なリクエストです (CSRFトークンが無効)'], 403);
-    }
+    $input = requireCsrfToken();
 
     if (empty($input['password'])) {
         sendJson(['success' => false, 'message' => 'パスワードを入力してください'], 400);

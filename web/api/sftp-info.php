@@ -4,15 +4,7 @@
  * RESTful APIエンドポイント
  */
 
-require_once '../includes/config.php';
-
-if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
-    sendJson(['success' => false, 'message' => 'ログインが必要です'], 401);
-}
-
-$method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-$user_id = $_SESSION['user_id'];
+require_once '../includes/api_middleware.php';
 
 // SFTP接続情報を取得
 if ($method === 'GET' && $action === 'info') {
