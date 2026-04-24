@@ -14,6 +14,30 @@
     return res.json();
   };
 
+  // ---- 0.5️⃣ 共通のUI操作・スタイルヘルパー ----
+  window.ui = {
+    showMessage: (el, text, type) => {
+      if (!el) return;
+      el.textContent = text;
+      if (type === 'info') el.style.color = '#3b82f6';
+      else if (type === 'success') el.style.color = '#10b981';
+      else if (type === 'error') el.style.color = '#e11d48';
+    },
+    createListItem: () => {
+      const li = document.createElement('li');
+      li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;';
+      return li;
+    },
+    createDeleteBtn: (text, onClick) => {
+      const btn = document.createElement('button');
+      btn.textContent = text;
+      btn.className = 'btn';
+      btn.style.cssText = 'background: #ef4444; padding: 0.25rem 0.5rem; font-size: 0.8rem;';
+      btn.onclick = onClick;
+      return btn;
+    }
+  };
+
   // ---- 1️⃣ サーバー側のセッション状態を確認 ----
   async function checkSession() {
     try {

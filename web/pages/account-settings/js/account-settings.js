@@ -13,8 +13,7 @@
   if (pwdForm) {
     pwdForm.addEventListener('submit', async e => {
       e.preventDefault();
-      pwdMsg.textContent = '処理中...';
-      pwdMsg.style.color = '#3b82f6';
+      window.ui.showMessage(pwdMsg, '処理中...', 'info');
 
       const data = await postJson('change-password', {
         current_password: pwdForm.current_password.value,
@@ -22,8 +21,7 @@
         confirm_password: pwdForm.confirm_password.value
       });
 
-      pwdMsg.textContent = data.message;
-      pwdMsg.style.color = data.success ? '#10b981' : '#e11d48';
+      window.ui.showMessage(pwdMsg, data.message, data.success ? 'success' : 'error');
       if (data.success) {
         pwdForm.reset();
       }
@@ -38,15 +36,13 @@
         return;
       }
 
-      delMsg.textContent = '処理中...';
-      delMsg.style.color = '#3b82f6';
+      window.ui.showMessage(delMsg, '処理中...', 'info');
 
       const data = await postJson('delete-account', {
         password: delForm.password.value
       });
 
-      delMsg.textContent = data.message;
-      delMsg.style.color = data.success ? '#10b981' : '#e11d48';
+      window.ui.showMessage(delMsg, data.message, data.success ? 'success' : 'error');
 
       if (data.success) {
         setTimeout(() => {

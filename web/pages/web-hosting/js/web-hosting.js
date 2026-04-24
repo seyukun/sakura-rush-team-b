@@ -22,8 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const domain = document.getElementById('wp_domain').value;
             const title = document.getElementById('wp_title').value;
 
-            wpMsg.style.color = '#3b82f6';
-            wpMsg.textContent = `${domain} へのインストール準備中...`;
+            window.ui.showMessage(wpMsg, `${domain} へのインストール準備中...`, 'info');
 
             try {
                 const result = await window.apiFetch('../../api/web-hosting.php?action=install-wp', {
@@ -32,16 +31,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 if (result.success) {
-                    wpMsg.style.color = 'green';
-                    wpMsg.textContent = result.message;
+                    window.ui.showMessage(wpMsg, result.message, 'success');
                     wpInstallForm.reset();
                 } else {
-                    wpMsg.style.color = 'red';
-                    wpMsg.textContent = result.message || 'インストールに失敗しました。';
+                    window.ui.showMessage(wpMsg, result.message || 'インストールに失敗しました。', 'error');
                 }
             } catch (err) {
-                wpMsg.style.color = 'red';
-                wpMsg.textContent = '通信エラーが発生しました。';
+                window.ui.showMessage(wpMsg, '通信エラーが発生しました。', 'error');
             }
         });
     }
@@ -62,8 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnUpdatePhp && phpVersion) {
         btnUpdatePhp.addEventListener('click', async () => {
             const version = phpVersion.value;
-            phpMsg.style.color = '#3b82f6';
-            phpMsg.textContent = '更新中...';
+            window.ui.showMessage(phpMsg, '更新中...', 'info');
 
             try {
                 const result = await window.apiFetch('../../api/web-hosting.php?action=update-php', {
@@ -72,18 +67,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 if (result.success) {
-                    phpMsg.style.color = 'green';
-                    phpMsg.textContent = result.message;
+                    window.ui.showMessage(phpMsg, result.message, 'success');
                 } else {
-                    phpMsg.style.color = 'red';
-                    phpMsg.textContent = result.message || '更新に失敗しました。';
+                    window.ui.showMessage(phpMsg, result.message || '更新に失敗しました。', 'error');
                 }
                 setTimeout(() => {
                     phpMsg.textContent = '';
                 }, 3000);
             } catch (err) {
-                phpMsg.style.color = 'red';
-                phpMsg.textContent = '通信エラーが発生しました。';
+                window.ui.showMessage(phpMsg, '通信エラーが発生しました。', 'error');
             }
         });
     }

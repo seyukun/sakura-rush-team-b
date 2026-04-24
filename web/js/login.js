@@ -5,6 +5,13 @@
   const pwdToggle = document.getElementById('togglePwd');
   const pwdInput = document.getElementById('password');
 
+  const showMessage = (text, type) => {
+    msg.textContent = text;
+    if (type === 'info') msg.style.color = '#3b82f6';
+    else if (type === 'success') msg.style.color = '#10b981';
+    else if (type === 'error') msg.style.color = '#e11d48';
+  };
+
   // 目視アイコンでパスワード表示/非表示切替
   pwdToggle.addEventListener('click', () => {
     const type = pwdInput.type === 'password' ? 'text' : 'password';
@@ -19,8 +26,7 @@
     const password = form.password.value;
 
     // ローディング状態
-    msg.textContent = 'ログイン中...';
-    msg.style.color = '#3b82f6';
+    showMessage('ログイン中...', 'info');
 
     try {
       // PHP API エンドポイントにPOST
@@ -37,8 +43,7 @@
 
       if (response.ok && data.success) {
         // ログイン成功
-        msg.textContent = 'ログインに成功しました。ダッシュボードへ移動します...';
-        msg.style.color = '#10b981';
+        showMessage('ログインに成功しました。ダッシュボードへ移動します...', 'success');
         // セッションクッキーがサーバー側で設定されるため、
         // ローカルストレージには保存せず直接リダイレクト
         setTimeout(() => {
@@ -46,12 +51,10 @@
         }, 500);
       } else {
         // ログイン失敗
-        msg.textContent = data.message || 'ログインに失敗しました';
-        msg.style.color = '#e11d48';
+        showMessage(data.message || 'ログインに失敗しました', 'error');
       }
     } catch (error) {
-      msg.textContent = 'ネットワークエラーが発生しました';
-      msg.style.color = '#e11d48';
+      showMessage('ネットワークエラーが発生しました', 'error');
       console.error('Login error:', error);
     }
   });

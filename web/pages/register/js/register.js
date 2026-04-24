@@ -3,10 +3,16 @@
   const form = document.getElementById('registerForm');
   const msg = document.getElementById('msg');
 
+  const showMessage = (text, type) => {
+    msg.textContent = text;
+    if (type === 'info') msg.style.color = '#3b82f6';
+    else if (type === 'success') msg.style.color = '#10b981';
+    else if (type === 'error') msg.style.color = '#e11d48';
+  };
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    msg.textContent = 'アカウントを作成しています...';
-    msg.style.color = '#3b82f6';
+    showMessage('アカウントを作成しています...', 'info');
 
     const response = await fetch('../../api/auth.php?action=register', {
       method: 'POST',
@@ -20,8 +26,7 @@
     });
 
     const data = await response.json();
-    msg.textContent = data.message || '処理が完了しました。';
-    msg.style.color = data.success ? '#10b981' : '#e11d48';
+    showMessage(data.message || '処理が完了しました。', data.success ? 'success' : 'error');
 
     if (data.success) {
       setTimeout(() => {

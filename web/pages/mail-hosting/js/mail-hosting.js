@@ -45,23 +45,12 @@
         }
         
         data.emails.forEach(email => {
-          const li = document.createElement('li');
-          li.style.display = 'flex';
-          li.style.justifyContent = 'space-between';
-          li.style.alignItems = 'center';
-          li.style.padding = '0.5rem 0';
-          li.style.borderBottom = '1px solid #e5e7eb';
+          const li = window.ui.createListItem();
           
           const emailText = document.createElement('span');
           emailText.textContent = email.email;
           
-          const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = '削除';
-          deleteBtn.className = 'btn';
-          deleteBtn.style.background = '#ef4444';
-          deleteBtn.style.padding = '0.25rem 0.5rem';
-          deleteBtn.style.fontSize = '0.8rem';
-          deleteBtn.onclick = () => deleteMail(email.id);
+          const deleteBtn = window.ui.createDeleteBtn('削除', () => deleteMail(email.id));
           
           li.appendChild(emailText);
           li.appendChild(deleteBtn);
@@ -100,8 +89,7 @@
     createMailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      mailMsg.textContent = '作成中...';
-      mailMsg.style.color = '#3b82f6';
+      window.ui.showMessage(mailMsg, '作成中...', 'info');
       
       const mailUser = createMailForm.mail_user.value.trim();
       const domainSelectEl = createMailForm.domain_id;
@@ -109,8 +97,7 @@
       const password = createMailForm.mail_password.value;
       
       if (!domainId) {
-        mailMsg.textContent = 'ドメインを選択してください';
-        mailMsg.style.color = '#e11d48';
+        window.ui.showMessage(mailMsg, 'ドメインを選択してください', 'error');
         return;
       }
       const domainName = domainSelectEl.options[domainSelectEl.selectedIndex].dataset.name;
@@ -126,16 +113,14 @@
           })
         });
         
-        mailMsg.textContent = data.message;
-        mailMsg.style.color = data.success ? '#10b981' : '#e11d48';
+        window.ui.showMessage(mailMsg, data.message, data.success ? 'success' : 'error');
         
         if (data.success) {
           createMailForm.reset();
           loadMails(); // 登録後、一覧を再読み込みして表示を更新する
         }
       } catch (error) {
-        mailMsg.textContent = '通信エラーが発生しました';
-        mailMsg.style.color = '#e11d48';
+        window.ui.showMessage(mailMsg, '通信エラーが発生しました', 'error');
       }
     });
   }

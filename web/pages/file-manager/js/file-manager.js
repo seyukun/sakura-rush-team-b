@@ -18,25 +18,14 @@
         }
         
         data.files.forEach(file => {
-          const li = document.createElement('li');
-          li.style.display = 'flex';
-          li.style.justifyContent = 'space-between';
-          li.style.alignItems = 'center';
-          li.style.padding = '0.5rem 0';
-          li.style.borderBottom = '1px solid #e5e7eb';
+          const li = window.ui.createListItem();
           
           const fileInfo = document.createElement('span');
           const date = new Date(file.modified * 1000).toLocaleString();
           const size = (file.size / 1024).toFixed(2) + ' KB';
           fileInfo.textContent = `${file.name} (${size}) - ${date}`;
           
-          const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = '削除';
-          deleteBtn.className = 'btn';
-          deleteBtn.style.background = '#ef4444';
-          deleteBtn.style.padding = '0.25rem 0.5rem';
-          deleteBtn.style.fontSize = '0.8rem';
-          deleteBtn.onclick = () => deleteFile(file.name);
+          const deleteBtn = window.ui.createDeleteBtn('削除', () => deleteFile(file.name));
           
           li.appendChild(fileInfo);
           li.appendChild(deleteBtn);
@@ -76,13 +65,11 @@
       e.preventDefault();
       
       if (fileInput.files.length === 0) {
-        fileMsg.textContent = 'ファイルを選択してください';
-        fileMsg.style.color = '#e11d48';
+        window.ui.showMessage(fileMsg, 'ファイルを選択してください', 'error');
         return;
       }
 
-      fileMsg.textContent = 'アップロード中...';
-      fileMsg.style.color = '#3b82f6';
+      window.ui.showMessage(fileMsg, 'アップロード中...', 'info');
 
       const formData = new FormData();
       formData.append('file', fileInput.files[0]);
@@ -93,16 +80,14 @@
           body: formData
         });
         
-        fileMsg.textContent = data.message;
-        fileMsg.style.color = data.success ? '#10b981' : '#e11d48';
+        window.ui.showMessage(fileMsg, data.message, data.success ? 'success' : 'error');
         
         if (data.success) {
           uploadForm.reset();
           loadFiles();
         }
       } catch (error) {
-        fileMsg.textContent = '通信エラーが発生しました';
-        fileMsg.style.color = '#e11d48';
+        window.ui.showMessage(fileMsg, '通信エラーが発生しました', 'error');
       }
     });
   }

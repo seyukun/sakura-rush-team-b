@@ -4,6 +4,13 @@
   const resetForm = document.getElementById('resetPasswordForm');
   const msg = document.getElementById('msg');
 
+  const showMessage = (text, type) => {
+    msg.textContent = text;
+    if (type === 'info') msg.style.color = '#3b82f6';
+    else if (type === 'success') msg.style.color = '#10b981';
+    else if (type === 'error') msg.style.color = '#e11d48';
+  };
+
   async function postJson(action, body) {
     const response = await fetch(`../../api/auth.php?action=${action}`, {
       method: 'POST',
@@ -15,24 +22,22 @@
 
   requestForm.addEventListener('submit', async e => {
     e.preventDefault();
-    msg.textContent = 'トークンを発行しています...';
-    msg.style.color = '#3b82f6';
+    showMessage('トークンを発行しています...', 'info');
 
     const data = await postJson('reset-request', {
       username: requestForm.username.value.trim()
     });
 
-    msg.textContent = data.message || '処理が完了しました。';
-    msg.style.color = data.success ? '#10b981' : '#e11d48';
     if (data.success && data.token) {
-      msg.textContent += ` トークン: ${data.token}`;
+      showMessage((data.message || '処理が完了しました。') + ` トークン: ${data.token}`, 'success');
+    } else {
+      showMessage(data.message || '処理が完了しました。', data.success ? 'success' : 'error');
     }
   });
 
   resetForm.addEventListener('submit', async e => {
     e.preventDefault();
-    msg.textContent = 'パスワードをリセットしています...';
-    msg.style.color = '#3b82f6';
+    showMessage('パスワードをリセットしています...', 'info');
 
     const data = await postJson('reset-password', {
       username: resetForm.username.value.trim(),
@@ -41,7 +46,6 @@
       confirm_password: resetForm.confirm_password.value
     });
 
-    msg.textContent = data.message || '処理が完了しました。';
-    msg.style.color = data.success ? '#10b981' : '#e11d48';
+    showMessage(data.message || '処理が完了しました。', data.success ? 'success' : 'error');
   });
 })();
