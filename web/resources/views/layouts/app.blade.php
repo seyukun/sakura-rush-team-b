@@ -15,7 +15,7 @@
     <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">ダッシュボード</a>
     <a href="{{ url('/web-hosting') }}" class="{{ request()->is('web-hosting') ? 'active' : '' }}">Webホスティング</a>
     <a href="{{ url('/mail-hosting') }}" class="{{ request()->is('mail-hosting') ? 'active' : '' }}">メールホスティング</a>
-    <a href="{{ url('/file-manager') }}" class="{{ request()->is('file-manager') ? 'active' : '' }}">ファイルマネージャー</a>
+    <!-- <a href="{{ url('/file-manager') }}" class="{{ request()->is('file-manager') ? 'active' : '' }}">ファイルマネージャー</a> -->
     <a href="{{ url('/account-settings') }}" class="{{ request()->is('account-settings') ? 'active' : '' }}">アカウント設定</a>
     <br><br>
     <a href="#" id="logoutBtn" style="color: #ef4444;">ログアウト</a>
