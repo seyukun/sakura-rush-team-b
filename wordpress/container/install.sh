@@ -207,6 +207,10 @@ php -v >/dev/null
 php-fpm"${PHP_VERSION}" -t
 nginx -t
 
+# for sftp server
+echo "Install SFTP Server"
+apt_install openssh-server
+
 apt-get clean
 
 echo "install.sh completed."
