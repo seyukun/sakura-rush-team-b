@@ -123,4 +123,15 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default Email Domain
+    |--------------------------------------------------------------------------
+    |
+    | This value is the default email domain used by the application.
+    |
+    */
+
+    'default_email_domain' => env('DEFAULT_EMAIL_DOMAIN', 'kubernetes.jp'),
+
 ];

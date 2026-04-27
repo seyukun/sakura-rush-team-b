@@ -26,7 +26,12 @@ class MailHostingController extends Controller
     // 利用可能なドメイン一覧の取得
     public function domains(Request $request)
     {
-        $domains = EmailDomain::where('user_id', $request->user()->id)->where('active', true)->orderBy('name')->get(['id', 'name']);
+        $domains = [
+            [
+                'id' => 1, // DBを使わないため固定のダミーIDを指定
+                'name' => config('app.default_email_domain'),
+            ]
+        ];
         return response()->json(['success' => true, 'domains' => $domains]);
     }
 
