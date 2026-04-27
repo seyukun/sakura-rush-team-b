@@ -1,0 +1,120 @@
+/* assets/css/style.css */
+
+/* 1️⃣ リセット & ベース */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: #222;
+  background: #f5f6fa;
+}
+
+/* 2️⃣ カラーパレット（自分の好きな色に変えて OK） */
+:root {
+  --primary: #3b82f6;   /* Tailwind の blue‑500 */
+  --primary-dark: #2563eb;
+  --bg-panel: #fff;
+  --bg-sidebar: #1e293b;
+  --text-light: #fff;
+}
+
+/* 3️⃣ ボタン */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--primary-dark); }
+
+/* 4️⃣ フォーム */
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+
+/* 5️⃣ ログインページ全体 */
+.login-wrapper {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-box {
+  width: 100%;
+  max-width: 360px;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+/* 6️⃣ ダッシュボード大枠 */
+.dashboard {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-height: 100%;
+}
+.sidebar {
+  background: var(--bg-sidebar);
+  color: var(--text-light);
+  padding: 2rem 1rem;
+}
+.sidebar a {
+  display: block;
+  color: var(--text-light);
+  text-decoration: none;
+  padding: 0.75rem 0.5rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+.sidebar a:hover,
+.sidebar a.active {
+  background: rgba(255,255,255,.1);
+}
+.main-content {
+  padding: 2rem;
+  background: #f5f6fa;
+}
+
+/* 7️⃣ カード (ダッシュボードのウィジェット) */
+.card {
+  background: var(--bg-panel);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+.cards-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+/* 8️⃣ レスポンシブ（スマホ） */
+@media (max-width: 768px) {
+  .dashboard { grid-template-columns: 1fr; }
+  .sidebar { grid-row: 1; }
+}
