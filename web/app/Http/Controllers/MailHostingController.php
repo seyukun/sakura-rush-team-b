@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\EmailUser;
 use App\Models\EmailDomain;
+use Illuminate\Support\Facades\Log;
 
 class MailHostingController extends Controller
 {
@@ -54,11 +55,29 @@ class MailHostingController extends Controller
             return response()->json(['success' => false, 'message' => 'このメールアドレスは既に登録されています'], 400);
         }
 
+        // --- PHP自身が認識しているユーザー名とIDをログに出力 ---
+        $whoami = trim(shell_exec('whoami 2>&1'));
+        $idInfo = trim(shell_exec('id 2>&1'));
+        Log::debug("実行ユーザー名: [{$whoami}] / ID情報: [{$idInfo}]");
+
+        // password.sh を呼び出してパスワードをハッシュ化
+        $escapedPassword = escapeshellarg($request->password);
+        // visudoのルールに一致させるため、bashを使わずスクリプトを直接呼び出す
+        $command = "sudo /home/ubuntu/password.sh {$escapedPassword} 2>&1";
+        $hashedPassword = trim(shell_exec($command));
+        Log::debug("password.sh output for {$request->email}: {$hashedPassword}");
+
+        // 正常なハッシュ値は {SHA512-CRYPT} のように { から始まるため、それで判定
+        if (empty($hashedPassword) || !str_starts_with($hashedPassword, '{')) {
+            Log::error("Failed to hash password for email: {$request->email}. Output: {$hashedPassword}");
+            return response()->json(['success' => false, 'message' => 'パスワードの暗号化に失敗しました。'], 500);
+        }
+
         $emailUser = EmailUser::create([
             'user_id' => $request->user()->id,
             'domain_id' => $request->domain_id,
             'email' => $request->email,
-            'password' => $request->password, // EmailUserモデルの casts により自動でハッシュ化されます
+            'password' => $hashedPassword,
         ]);
 
         return response()->json(['success' => true, 'message' => 'メールアカウントを作成しました', 'id' => $emailUser->id], 201);

@@ -22,12 +22,16 @@ class ContainerController extends Controller
         // フロントエンドから送信されたパスワードの検証
         $request->validate([
             'sftp_password' => 'required|string|min:8',
+            'subdomain'     => 'required|string|max:63|regex:/^[a-z0-9-]+$/', // サブドメインのバリデーション
         ], [
             'sftp_password.required' => 'SFTPパスワードは必須です',
             'sftp_password.min' => 'SFTPパスワードは8文字以上で設定してください',
+            'subdomain.required' => 'サブドメインは必須です',
+            'subdomain.regex' => 'サブドメインは小文字の英数字とハイフンのみ使用できます',
         ]);
 
         $sftpPassword = $request->sftp_password;
+        $subdomain = $request->subdomain;
 
         // コンテナIDの生成（小文字英数字で10文字以内： "c_" + 8文字 = 10文字）
         do {
@@ -55,7 +59,8 @@ class ContainerController extends Controller
 
         try {
             // 内部APIへJSONでPOSTリクエストを送信
-            $response = Http::post('http://127.0.0.1:9080/internal/create-user-container', [
+            $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/create-user-container';
+            $response = Http::post($apiUrl, [
                 'id'            => $containerId,
                 'user_id'       => $user->id,
                 'ip'            => $ip,
@@ -65,6 +70,7 @@ class ContainerController extends Controller
                 'volume_size'   => 20,
                 'sftp_port'     => $sftpPort,
                 'sftp_password' => $sftpPassword,
+                'subdomain'     => $subdomain,
             ]);
 
             if ($response->successful()) {
