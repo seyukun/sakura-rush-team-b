@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MailHostingController;
 use App\Http\Controllers\FileManagerController;
+use App\Http\Controllers\WebHostingController;
+use App\Http\Controllers\ContainerController;
 use Illuminate\Http\Request;
 use App\Models\Container;
 use App\Models\EmailUser;
@@ -43,6 +45,9 @@ Route::middleware('auth')->group(function () {
     return view('dashboard', compact('container', 'mailCount'));
     })->name('dashboard');
 
+    // コンテナ作成
+    Route::post('/api/container/create', [ContainerController::class, 'create']);
+
     // アカウント設定
     Route::get('/account-settings', function () {
         return view('account-settings');
@@ -60,11 +65,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/mail-hosting/create', [MailHostingController::class, 'create']);
     Route::delete('/api/mail-hosting/delete', [MailHostingController::class, 'delete']);
 
-    // ファイルマネージャー
-    Route::get('/file-manager', function () {
-        return view('file-manager');
-    })->name('file-manager');
-    Route::get('/api/file-manager/list', [FileManagerController::class, 'list']);
-    Route::post('/api/file-manager/upload', [FileManagerController::class, 'upload']);
-    Route::delete('/api/file-manager/delete', [FileManagerController::class, 'delete']);
+    // // ファイルマネージャー
+    // Route::get('/file-manager', function () {
+    //     return view('file-manager');
+    // })->name('file-manager');
+    // Route::get('/api/file-manager/list', [FileManagerController::class, 'list']);
+    // Route::post('/api/file-manager/upload', [FileManagerController::class, 'upload']);
+    // Route::delete('/api/file-manager/delete', [FileManagerController::class, 'delete']);
+
+    // Webホスティング (WordPress設定)
+    Route::get('/web-hosting', function () {
+        return view('web-hosting');
+    })->name('web-hosting');
+    Route::post('/api/web-hosting/setup', [WebHostingController::class, 'setup']);
 });
