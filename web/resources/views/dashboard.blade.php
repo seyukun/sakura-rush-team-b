@@ -15,6 +15,14 @@
       @else
         <p style="color: #e11d48; margin-bottom: 1rem;">SFTP情報が見つかりません（コンテナ未作成）</p>
         <form id="createContainerForm">
+            <div style="margin-bottom: 1rem;">
+              <label for="subdomain" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">希望するサブドメイン</label>
+              <div style="display: flex; align-items: center;">
+                <input type="text" id="subdomain" name="subdomain" class="input" required pattern="^[a-z0-9\-]+$" placeholder="例: test23" style="flex: 1;">
+                <span style="margin-left: 0.5rem; color: #4b5563;">.kubernetes.jp</span>
+              </div>
+              <small style="color: #6b7280; display: block; margin-top: 0.25rem;">※小文字の英数字とハイフンのみ使用できます。</small>
+            </div>
             <label for="sftp_password">SFTPパスワードを設定してください（8文字以上）</label>
             <input type="password" id="sftp_password" name="sftp_password" class="input" required minlength="8" style="margin-bottom:1rem;" placeholder="StrongPassword123!">
             <button type="submit" id="createBtn" class="btn" style="background:#10b981;">コンテナを作成する</button>
@@ -41,6 +49,7 @@
       e.preventDefault();
       
       const sftpPassword = document.getElementById('sftp_password').value;
+      const subdomainInput = document.getElementById('subdomain').value;
 
       createBtn.disabled = true;
       createBtn.textContent = '作成中... しばらくお待ちください';
@@ -58,7 +67,8 @@
             'Accept': 'application/json'
           },
           body: JSON.stringify({
-            sftp_password: sftpPassword
+            sftp_password: sftpPassword,
+            subdomain: subdomainInput
           })
         });
 
