@@ -19,6 +19,10 @@ CTR_BRIDGE="${CTR_BRIDGE:-ctrbr0}"
 SFTP_CLEAN="${SFTP_CLEAN:-sftp_clean.sh}"
 SFTP_EXT_IF="${SFTP_EXT_IF:-ens3}"
 
+SFTP_USER="${SFTP_USER:-sftpuser}"
+
+WORDPRESS_UNBIND_HOST="${WORDPRESS_UNBIND_HOST:-./shell_scripts/unbind_wordpress_uploads_host.sh}"
+
 NGINX_CONF_DIR="${NGINX_CONF_DIR:-/etc/nginx/conf.d}"
 
 stage='init'
@@ -126,7 +130,7 @@ user_dir="${USERS_DIR}/${user_id}"
 container_root="${user_dir}/rootfs"
 ip_only="${ip%%/*}"
 
-# 1. SFTP cleanup
+# 1. SFTP clean
 stage='clean_sftp'
 "${SFTP_CLEAN}" \
   "${id}" \
@@ -136,18 +140,23 @@ stage='clean_sftp'
   "${CTR_BRIDGE}" \
   1>&2
 
-# 2. container stop (sleep infinity kill)
+# 2. Stop main container process (sleep infinity)
 stage='stop_container'
 sudo -n "${SCRATCH_CONTAINER}" exec "${id}" bash -lc \
   "pkill -f '^sleep infinity$' >/dev/null 2>&1 || pkill -x sleep >/dev/null 2>&1 || true" \
   1>&2 || true
 
-# 3. stopped wait
+# 3. Wait until container becomes unavailable
 stage='wait_container_stopped'
 wait_container_stopped 50 0.2 || fail_json 1 "\"CONTAINER_STOP_TIMEOUT\"" "container did not stop"
 
-# 4. nginx conf cleanup
-# /etc/nginx/conf.d の *.conf から、対象 IP を含む設定を削除
+# 4. Unbind WordPress uploads host-side
+stage='unbind_wordpress_uploads'
+if [[ -x "${WORDPRESS_UNBIND_HOST}" ]]; then
+  "${WORDPRESS_UNBIND_HOST}" "${container_root}" "${SFTP_USER}" 1>&2 || true
+fi
+
+# 5. Remove nginx confs containing this IP
 stage='remove_nginx_conf'
 mapfile -t conf_files < <(sudo grep -lF -- "${ip_only}" "${NGINX_CONF_DIR}"/*.conf 2>/dev/null || true)
 
@@ -163,7 +172,7 @@ if [[ ${#conf_files[@]} -gt 0 ]]; then
   fi
 fi
 
-# 5. rootfs cleanup
+# 6. Remove rootfs
 stage='remove_rootfs'
 sudo rm -rf "${container_root}" 1>&2 || true
 rmdir "${user_dir}" >/dev/null 2>&1 || true

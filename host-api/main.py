@@ -29,6 +29,17 @@ WORDPRESS_TIMEOUT_SEC = 120
 FORWARD_HTTP_TIMEOUT_SEC = 60
 UINT32_MAX = 4294967295
 
+WORDPRESS_BIND_HOST_SCRIPT_PATH = "./shell_scripts/bind_wordpress_uploads_host.sh"
+WORDPRESS_UNBIND_HOST_SCRIPT_PATH = "./shell_scripts/unbind_wordpress_uploads_host.sh"
+
+WORDPRESS_BIND_TIMEOUT_SEC = 30
+SFTP_FIXED_USER = "sftpuser"
+
+USERS_DIR = os.environ.get("USERS_DIR", os.path.join(os.environ.get("HOME", "/root"), "rootfses"))
+
+SFTP_FIXED_USER = "sftpuser"
+WORDPRESS_UPLOADS_REL = "/var/www/html/wordpress/wp-content/"
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -89,6 +100,7 @@ class CreateUserContainerRequest(BaseModel):
 class StartWordPressRequest(BaseModel):
     # containers.id = CHAR(10)
     id: str = Field(min_length=10, max_length=10)
+    user_id: int = Field(ge=1, le=UINT32_MAX)
 
     mariadb_root_password: str = Field(default="i_am_root", max_length=255)
     mariadb_database: str = Field(default="i_am_database", max_length=255)
@@ -496,19 +508,18 @@ def run_create_container_script(payload: CreateUserContainerRequest) -> dict[str
     return data
 
 
-def run_wordpress_script(payload: StartWordPressRequest) -> dict[str, Any] | JSONResponse:
+def run_wordpress_script(payload: StartWordPressRequest) -> dict[str, Any]:
     if not os.path.isfile(WORDPRESS_SCRIPT_PATH) or not os.access(WORDPRESS_SCRIPT_PATH, os.X_OK):
-        return error_json_response(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            error="script_not_executable",
-            id=payload.id,
-            message=WORDPRESS_SCRIPT_PATH,
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"script_not_executable: {WORDPRESS_SCRIPT_PATH}",
         )
 
-    cmd = [
-        WORDPRESS_SCRIPT_PATH,
-        payload.id,
-    ]
+    if not os.path.isfile(WORDPRESS_BIND_HOST_SCRIPT_PATH) or not os.access(WORDPRESS_BIND_HOST_SCRIPT_PATH, os.X_OK):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"script_not_executable: {WORDPRESS_BIND_HOST_SCRIPT_PATH}",
+        )
 
     env = {
         "PATH": "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin",
@@ -532,6 +543,14 @@ def run_wordpress_script(payload: StartWordPressRequest) -> dict[str, Any] | JSO
         "WP_DISPLAYNAME": payload.wp_displayname,
     }
 
+    # --------------------------------------------------
+    # 1. 03-start-wordpress.sh
+    # --------------------------------------------------
+    wp_cmd = [
+        WORDPRESS_SCRIPT_PATH,
+        payload.id,
+    ]
+
     logger.info(
         "start_wordpress start id=%s script=%s",
         payload.id,
@@ -539,9 +558,11 @@ def run_wordpress_script(payload: StartWordPressRequest) -> dict[str, Any] | JSO
     )
 
     try:
-        completed = subprocess.run(
-            cmd,
+        wp_completed = subprocess.run(
+            wp_cmd,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
             timeout=WORDPRESS_TIMEOUT_SEC,
             check=False,
@@ -549,48 +570,146 @@ def run_wordpress_script(payload: StartWordPressRequest) -> dict[str, Any] | JSO
         )
     except subprocess.TimeoutExpired as e:
         logger.error("wordpress script timeout id=%s stderr=%s", payload.id, e.stderr)
-        return error_json_response(
-            status.HTTP_504_GATEWAY_TIMEOUT,
-            error="script_timeout",
-            id=payload.id,
-            message="wordpress install timed out",
-            stderr=(e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr) if e.stderr else None,
-            stdout=(e.stdout.decode() if isinstance(e.stdout, bytes) else e.stdout) if e.stdout else None,
-        )
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail={
+                "error": "script_timeout",
+                "phase": "wordpress_install",
+            },
+        ) from e
     except OSError as e:
         logger.exception("failed to start wordpress script")
-        return error_json_response(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            error="failed_to_start_script",
-            id=payload.id,
-            message=str(e),
-        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "failed_to_start_script",
+                "phase": "wordpress_install",
+            },
+        ) from e
 
-    stdout = (completed.stdout or "").strip()
-    stderr = (completed.stderr or "").strip()
+    wp_stdout = (wp_completed.stdout or "").strip()
+    wp_stderr = (wp_completed.stderr or "").strip()
 
     logger.info(
         "start_wordpress finish id=%s exit_code=%s stderr=%s",
         payload.id,
-        completed.returncode,
-        stderr[:1000],
+        wp_completed.returncode,
+        wp_stderr[:1000],
     )
 
-    if completed.returncode != 0:
-        return error_json_response(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            error="script_failed",
-            id=payload.id,
-            exit_code=completed.returncode,
-            stdout=stdout,
-            stderr=stderr,
+    if wp_completed.returncode != 0:
+        detail: dict[str, Any] = {
+            "error": "script_failed",
+            "phase": "wordpress_install",
+            "exit_code": wp_completed.returncode,
+        }
+
+        if wp_stdout:
+            detail["stdout"] = wp_stdout
+
+        if wp_stderr:
+            detail["stderr"] = wp_stderr
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
+        )
+
+    # --------------------------------------------------
+    # 2. bind_wordpress_uploads_host.sh
+    # --------------------------------------------------
+    container_root = os.path.join(USERS_DIR, str(payload.user_id), "rootfs")
+
+    bind_cmd = [
+        WORDPRESS_BIND_HOST_SCRIPT_PATH,
+        container_root,
+        SFTP_FIXED_USER,
+        WORDPRESS_UPLOADS_REL,
+    ]
+
+    logger.info(
+        "bind_wordpress_host start id=%s user=%s root=%s uploads=%s script=%s",
+        payload.id,
+        SFTP_FIXED_USER,
+        container_root,
+        WORDPRESS_UPLOADS_REL,
+        WORDPRESS_BIND_HOST_SCRIPT_PATH,
+    )
+
+    try:
+        bind_completed = subprocess.run(
+            bind_cmd,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=WORDPRESS_BIND_TIMEOUT_SEC,
+            check=False,
+            env={
+                "PATH": "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin",
+                "HOME": os.environ.get("HOME", "/root"),
+                "LANG": "C",
+            },
+        )
+    except subprocess.TimeoutExpired as e:
+        logger.error("wordpress bind timeout id=%s stderr=%s", payload.id, e.stderr)
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail={
+                "error": "script_timeout",
+                "phase": "wordpress_bind_host",
+            },
+        ) from e
+    except OSError as e:
+        logger.exception("failed to start wordpress bind host script")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "failed_to_start_script",
+                "phase": "wordpress_bind_host",
+            },
+        ) from e
+
+    bind_stdout = (bind_completed.stdout or "").strip()
+    bind_stderr = (bind_completed.stderr or "").strip()
+
+    logger.info(
+        "bind_wordpress_host finish id=%s exit_code=%s stderr=%s",
+        payload.id,
+        bind_completed.returncode,
+        bind_stderr[:1000],
+    )
+
+    if bind_completed.returncode != 0:
+        detail: dict[str, Any] = {
+            "error": "script_failed",
+            "phase": "wordpress_bind_host",
+            "exit_code": bind_completed.returncode,
+        }
+
+        if bind_stdout:
+            detail["stdout"] = bind_stdout
+        if bind_stderr:
+            detail["stderr"] = bind_stderr
+
+        # install 成功済みの情報も添える
+        detail["wordpress_stdout"] = wp_stdout
+        if wp_stderr:
+            detail["wordpress_stderr"] = wp_stderr
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
         )
 
     return {
         "ok": True,
         "id": payload.id,
-        "stdout": stdout,
-        "stderr": stderr,
+        "container_root": container_root,
+        "wordpress_stdout": wp_stdout,
+        "wordpress_stderr": wp_stderr,
+        "bind_stdout": bind_stdout,
+        "bind_stderr": bind_stderr,
     }
 
 

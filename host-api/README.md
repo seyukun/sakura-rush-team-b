@@ -33,6 +33,7 @@ curl -sS \
   -H 'Content-Type: application/json' \
   -d '{
     "id":"c_abc12345",
+    "user_id":1,
     "mariadb_root_password":"rootpass",
     "mariadb_database":"wordpress",
     "mariadb_user":"wpuser",

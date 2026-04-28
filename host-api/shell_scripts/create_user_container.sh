@@ -148,20 +148,7 @@ sudo chown -R $USER:$USER ${container_root}
 
 # コンテナ起動
 stage='run_container'
-echo "sudo -bn ${SCRATCH_CONTAINER} run \
-  ${container_root} \
-  ${id} \
-  debian \
-  ${ip} \
-  ${CTR_GATEWAY} \
-  ${CTR_BRIDGE} \
-  ${cpu_quota_ms} \
-  ${cpu_period_ms} \
-  ${mem_m}M \
-  sleep infinity \
-  </dev/null >/dev/null 2>&1"
-
-sudo -bn "${SCRATCH_CONTAINER}" run \
+sudo "${SCRATCH_CONTAINER}" run \
   "${container_root}" \
   "${id}" \
   "debian" \
@@ -172,7 +159,7 @@ sudo -bn "${SCRATCH_CONTAINER}" run \
   "${cpu_period_ms}" \
   "${mem_m}M" \
   sleep infinity \
-  </dev/null >/dev/null 2>&1
+  </dev/null >/dev/null 2>&1 &
 
 
 stage='wait_container_ready'
