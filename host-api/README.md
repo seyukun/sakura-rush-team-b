@@ -13,9 +13,9 @@ sudo cp ./shell_scripts/sftp_clean.sh /usr/local/bin/
 
 ```
 curl -sS -X POST 'http://127.0.0.1:9080/internal/create-user-container' -H 'Content-Type: application/json' -d '{
-    "id":"c_abc12345",
-    "user_id":1,
-    "ip":"10.200.1.20/24",
+    "id":"c_AAA12345",
+    "user_id":8,
+    "ip":"10.200.1.30/24",
     "cpu_quota_ms":50000,
     "cpu_period_ms":100000,
     "mem_m":256,
@@ -32,13 +32,13 @@ curl -sS \
   -X POST 'http://127.0.0.1:9080/internal/wordpress-install' \
   -H 'Content-Type: application/json' \
   -d '{
-    "id":"c_abc12345",
-    "user_id":1,
+    "id":"c_AAA12345",
+    "user_id":8,
     "mariadb_root_password":"rootpass",
     "mariadb_database":"wordpress",
     "mariadb_user":"wpuser",
     "mariadb_password":"wppass",
-    "wp_url":"http://10.200.1.20",
+    "wp_url":"http://10.200.1.30",
     "wp_title":"My Blog",
     "wp_admin":"admin",
     "wp_admin_password":"adminpass",
@@ -58,8 +58,8 @@ curl -sS \
   -H 'Content-Type: application/json' \
   -d '{
     "id":"wp1",
-    "ip":"10.200.1.20/24",
-    "host_port":8081
+    "ip":"10.200.1.30/24",
+    "host_port":8082
   }'
 ```
 
@@ -70,7 +70,7 @@ curl -sS \
   -X POST 'http://127.0.0.1:9080/internal/sftp-passwd-change' \
   -H 'Content-Type: application/json' \
   -d '{
-    "id":"c_abc12345",
+    "id":"c_AAA12345",
     "password":"NewSecretPass123"
   }'
 ```
@@ -82,9 +82,9 @@ curl -sS \
   -X POST 'http://127.0.0.1:9080/internal/delete-user-container' \
   -H 'Content-Type: application/json' \
   -d '{
-    "id":"c_abc12345",
+    "id":"c_AAA12345",
     "user_id":1,
-    "ip":"10.200.1.20/24",
+    "ip":"10.200.1.30/24",
     "sftp_port":22023
   }'
 ```
