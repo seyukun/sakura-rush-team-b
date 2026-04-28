@@ -18,7 +18,7 @@ curl -sS -X POST 'http://127.0.0.1:9080/internal/create-user-container' -H 'Cont
     "ip":"10.200.1.30/24",
     "cpu_quota_ms":50000,
     "cpu_period_ms":100000,
-    "mem_m":256,
+    "mem_m":1024,
     "volume_size":20,
     "sftp_port":22023,
     "sftp_password":"StrongPassword123!"
@@ -83,7 +83,7 @@ curl -sS \
   -H 'Content-Type: application/json' \
   -d '{
     "id":"c_AAA12345",
-    "user_id":1,
+    "user_id":8,
     "ip":"10.200.1.30/24",
     "sftp_port":22023
   }'

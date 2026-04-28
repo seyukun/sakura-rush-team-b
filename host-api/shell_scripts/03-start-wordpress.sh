@@ -137,7 +137,6 @@ stop_existing_services() {
 
     cexec env "MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}" bash -lc '
         mariadb-admin -h 127.0.0.1 -uroot -p"$MARIADB_ROOT_PASSWORD" shutdown >/dev/null 2>&1 || true
-        pkill -x nginx >/dev/null 2>&1 || true
         pkill -x php-fpm'"${PHP_VERSION}"' >/dev/null 2>&1 || true
         pkill -x mariadbd >/dev/null 2>&1 || true
         pkill -x mysqld >/dev/null 2>&1 || true

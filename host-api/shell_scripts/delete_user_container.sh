@@ -13,6 +13,7 @@ ip=''
 sftp_port=''
 
 SCRATCH_CONTAINER="${SCRATCH_CONTAINER:-${HOME_SAFE}/scratch-container}"
+SCRATCH_CONTAINER_CTL="${HOME}/containerctl.py"
 USERS_DIR="${USERS_DIR:-${HOME_SAFE}/rootfses}"
 CTR_BRIDGE="${CTR_BRIDGE:-ctrbr0}"
 
@@ -140,11 +141,9 @@ stage='clean_sftp'
   "${CTR_BRIDGE}" \
   1>&2
 
-# 2. Stop main container process (sleep infinity)
+# 2. Remove main container process
 stage='stop_container'
-sudo -n "${SCRATCH_CONTAINER}" exec "${id}" bash -lc \
-  "pkill -f '^sleep infinity$' >/dev/null 2>&1 || pkill -x sleep >/dev/null 2>&1 || true" \
-  1>&2 || true
+sudo -n "${SCRATCH_CONTAINER_CTL}" rm "${id}"
 
 # 3. Wait until container becomes unavailable
 stage='wait_container_stopped'

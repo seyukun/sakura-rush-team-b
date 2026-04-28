@@ -14,6 +14,7 @@ volume_size=''
 sftp_port=''
 
 SCRATCH_CONTAINER="${SCRATCH_CONTAINER:-${HOME}/scratch-container}"
+SCRATCH_CONTAINER_CTL="${HOME}/containerctl.py"
 BASE_ROOTFS="${BASE_ROOTFS:-${HOME}/base_rootfs}"
 USERS_DIR="${USERS_DIR:-${HOME}/rootfses}"
 CTR_GATEWAY="${CTR_GATEWAY:-10.200.1.1}"
@@ -148,7 +149,7 @@ sudo chown -R $USER:$USER ${container_root}
 
 # コンテナ起動
 stage='run_container'
-sudo "${SCRATCH_CONTAINER}" run \
+sudo "${SCRATCH_CONTAINER_CTL}" run \
   "${container_root}" \
   "${id}" \
   "debian" \
@@ -158,9 +159,7 @@ sudo "${SCRATCH_CONTAINER}" run \
   "${cpu_quota_ms}" \
   "${cpu_period_ms}" \
   "${mem_m}M" \
-  sleep infinity \
-  </dev/null >/dev/null 2>&1 &
-
+  nginx -g 'daemon off;'
 
 stage='wait_container_ready'
 wait_container_ready 50 0.2
