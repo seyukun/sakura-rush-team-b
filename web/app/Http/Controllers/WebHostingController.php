@@ -15,10 +15,10 @@ class WebHostingController extends Controller
 
         // 1. フロントエンドから送られてくるデータのバリデーション
         $request->validate([
-            'wp_title' => 'required|string|max:255',
-            'wp_user'  => 'required|string|max:255',
-            'wp_pass'  => 'required|string|min:8',
-            'wp_email' => 'required|email|max:255',
+            'wp_title'    => 'required|string|max:255',
+            'wp_username' => 'required|string|max:255',
+            'wp_password' => 'required|string|min:8',
+            'wp_email'    => 'required|email|max:255',
         ]);
 
         // 2. ユーザーのコンテナ情報を取得
@@ -33,8 +33,8 @@ class WebHostingController extends Controller
 
         try {
             // 4. チームメンバーが作成した内部APIにJSONでリクエストを送信
-            $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/wordpress_install';
-            $response = Http::post($apiUrl, [
+            $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/wordpress-install';
+            $payload = array_filter([
                 'id'                    => $container->id,
                 'user_id'               => $user->id,
                 'mariadb_root_password' => $request->mariadb_root_password,
@@ -50,7 +50,9 @@ class WebHostingController extends Controller
                 'wp_email'              => $request->wp_email,
                 'wp_password'           => $request->wp_password,
                 'wp_displayname'        => $request->wp_displayname,
-            ]);
+            ], fn($val) => !is_null($val));
+
+            $response = Http::post($apiUrl, $payload);
 
             if ($response->successful()) {
                 // 成功した場合、フロントエンドに結果と生成したURLを返す
