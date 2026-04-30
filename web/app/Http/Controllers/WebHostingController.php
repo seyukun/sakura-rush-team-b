@@ -53,7 +53,7 @@ class WebHostingController extends Controller
                 'wp_displayname'        => $request->wp_displayname,
             ], fn($val) => !is_null($val));
 
-            $response = Http::post($apiUrl, $payload);
+            $response = Http::timeout(120)->post($apiUrl, $payload);
 
             if ($response->successful()) {
                 // 成功した場合、フロントエンドに結果と生成したURLを返す
