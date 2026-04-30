@@ -32,6 +32,7 @@ class ContainerController extends Controller
 
         $sftpPassword = $request->sftp_password;
         $subdomain = $request->subdomain;
+        $domain = $subdomain . '.kubernetes.jp';
 
         // コンテナIDの生成（小文字英数字で10文字以内： "c_" + 8文字 = 10文字）
         do {
@@ -88,6 +89,7 @@ class ContainerController extends Controller
                 'volume_size'   => 20,
                 'sftp_port'     => $sftpPort,
                 'sftp_password' => $sftpPassword,
+                'domain'        => $domain,
             ]);
 
             if ($response->successful()) {

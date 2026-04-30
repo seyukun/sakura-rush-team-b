@@ -44,6 +44,9 @@ WORDPRESS_UPLOADS_REL = "/var/www/html/wordpress/wp-content/"
 NGINX_INSERTCONF_SCRIPT_PATH = "./shell_scripts/nginx-insertconf.sh"
 NGINX_INSERTCONF_TIMEOUT_SEC = 30
 
+HASH_MAIL_PASSWORD_SCRIPT_PATH = "/home/ubuntu/password.sh"
+HASH_MAIL_PASSWORD_TIMEOUT_SEC = 10
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -177,6 +180,10 @@ class DeleteUserContainerRequest(BaseModel):
 
 class SubdomainRequest(BaseModel):
     subdomain: str
+
+
+class HashMailPasswordRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=255)
 
 
 def run_forward_http_script(payload: PortForwardRequest) -> dict[str, Any]:
@@ -947,6 +954,75 @@ def run_nginx_insertconf_script(domain: str, ip: str, container_id: str) -> dict
     return result
 
 
+def run_hash_mail_password_script(payload: HashMailPasswordRequest) -> dict[str, Any]:
+    if not os.path.isfile(HASH_MAIL_PASSWORD_SCRIPT_PATH) or not os.access(HASH_MAIL_PASSWORD_SCRIPT_PATH, os.X_OK):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"script_not_executable: {HASH_MAIL_PASSWORD_SCRIPT_PATH}",
+        )
+
+    cmd = [
+        "sudo",
+        HASH_MAIL_PASSWORD_SCRIPT_PATH,
+        payload.password,
+    ]
+
+    logger.info(
+        "hash_mail_password start script=%s",
+        HASH_MAIL_PASSWORD_SCRIPT_PATH,
+    )
+
+    try:
+        completed = subprocess.run(
+            cmd,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=HASH_MAIL_PASSWORD_TIMEOUT_SEC,
+            check=False,
+            env={
+                "PATH": "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin",
+                "HOME": os.environ.get("HOME", "/root"),
+                "LANG": "C",
+            },
+        )
+    except subprocess.TimeoutExpired as e:
+        logger.error("hash_mail_password timeout stderr=%s", e.stderr)
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="script_timeout",
+        ) from e
+    except OSError as e:
+        logger.exception("failed to start hash_mail_password script")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed_to_start_script",
+        ) from e
+
+    stdout = (completed.stdout or "").strip()
+    stderr = (completed.stderr or "").strip()
+
+    logger.info(
+        "hash_mail_password finish exit_code=%s stderr=%s",
+        completed.returncode,
+        stderr[:1000],
+    )
+
+    if completed.returncode != 0:
+        detail: dict[str, Any] = {
+            "error": "script_failed",
+            "exit_code": completed.returncode,
+        }
+        if stdout:
+            detail["stdout"] = stdout
+        if stderr:
+            detail["stderr"] = stderr
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
+
+    return {"hashed_password": stdout}
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, bool]:
     return {"ok": True}
@@ -1013,3 +1089,11 @@ async def register_subdomain(req: SubdomainRequest):
         print(f"[ERROR] Subdomain registration failed with code {e.returncode}: {error_msg}")
         raise HTTPException(status_code=400, detail=error_msg)
 
+
+@app.post("/internal/hash-mail-password")
+def hash_mail_password(
+    request: Request,
+    payload: HashMailPasswordRequest,
+) -> dict[str, Any]:
+    enforce_local_only(request)
+    return run_hash_mail_password_script(payload)

@@ -100,3 +100,14 @@ curl -sS \
     "subdomain":"your-new-subdomain"
   }'
 ```
+
+### `POST /internal/hash-mail-password`
+
+メールアカウント用のパスワードをハッシュ化します（内部利用専用）。
+
+**Request Body:**
+
+```json
+{
+  "password": "my_secure_password"
+}

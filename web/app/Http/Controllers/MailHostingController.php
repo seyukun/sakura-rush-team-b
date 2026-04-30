@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\EmailUser;
 use App\Models\EmailDomain;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class MailHostingController extends Controller
 {
@@ -21,6 +22,17 @@ class MailHostingController extends Controller
     public function list(Request $request)
     {
         $emails = EmailUser::where('user_id', $request->user()->id)->orderBy('email')->get(['id', 'domain_id', 'email']);
+
+        // 各メールアカウントにIMAP/SMTPの接続情報を付与する
+        $emails->transform(function ($email) {
+            $email->imap_server = 'mail.kubernetes.jp';
+            $email->imap_port = 993;
+            $email->smtp_server = 'mail.kubernetes.jp';
+            $email->smtp_port = 587;
+            $email->username = $email->email; // ユーザー名は作成したメールアドレス
+            return $email;
+        });
+
         return response()->json(['success' => true, 'emails' => $emails]);
     }
 
@@ -55,18 +67,29 @@ class MailHostingController extends Controller
             return response()->json(['success' => false, 'message' => 'このメールアドレスは既に登録されています'], 400);
         }
 
+        // 内部API (host-api) を呼び出してパスワードをハッシュ化
+        try {
+            $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/hash-mail-password';
+            $response = Http::post($apiUrl, [
+                'password' => $request->password,
+            ]);
 
-        // password.sh を呼び出してパスワードをハッシュ化
-        $escapedPassword = escapeshellarg($request->password);
-        // visudoのルールに一致させるため、bashを使わずスクリプトを直接呼び出す
-        $command = "sudo /home/ubuntu/password.sh {$escapedPassword} 2>&1";
-        $hashedPassword = trim(shell_exec($command));
-        Log::debug("password.sh output for {$request->email}: {$hashedPassword}");
+            if ($response->successful()) {
+                // FastAPI側が {"hashed_password": "..."} という形式で返す想定
+                $hashedPassword = $response->json('hashed_password');
 
-        // 正常なハッシュ値は {SHA512-CRYPT} のように { から始まるため、それで判定
-        if (empty($hashedPassword) || !str_starts_with($hashedPassword, '{')) {
-            Log::error("Failed to hash password for email: {$request->email}. Output: {$hashedPassword}");
-            return response()->json(['success' => false, 'message' => 'パスワードの暗号化に失敗しました。'], 500);
+                // 正常なハッシュ値は {SHA512-CRYPT} のように { から始まるため、それで判定
+                if (empty($hashedPassword) || !str_starts_with($hashedPassword, '{')) {
+                    Log::error("Failed to hash password for email: {$request->email}. Output: {$hashedPassword}");
+                    return response()->json(['success' => false, 'message' => 'パスワードの暗号化に失敗しました。'], 500);
+                }
+            } else {
+                Log::error("Password hash API failed: " . $response->body());
+                return response()->json(['success' => false, 'message' => 'パスワードの暗号化に失敗しました。'], 500);
+            }
+        } catch (\Exception $exception) {
+            Log::error('Password hash API connection error: ' . $exception->getMessage());
+            return response()->json(['success' => false, 'message' => '内部APIサーバーとの通信に失敗しました。'], 500);
         }
 
         $emailUser = EmailUser::create([

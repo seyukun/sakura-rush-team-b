@@ -34,6 +34,30 @@
         <li style="color: #999;">読み込み中...</li>
       </ul>
     </div>
+
+    <!-- メールソフト設定情報 -->
+    <div class="card">
+      <h3 style="margin-bottom:1rem;">メールソフト設定</h3>
+      <p style="margin-bottom:1rem; font-size: 0.9rem; color: #4b5563;">メールクライアントには以下の情報を設定してください。</p>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">IMAP (受信)</h4>
+        <ul style="list-style: none; padding: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.6;">
+          <li><strong>サーバー：</strong>mail.kubernetes.jp</li>
+          <li><strong>ポート：</strong>993</li>
+          <li><strong>ユーザー：</strong>作成したメールアカウント<br>（例: info@kubernetes.jp）</li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 style="font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">SMTP (送信)</h4>
+        <ul style="list-style: none; padding: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.6;">
+          <li><strong>サーバー：</strong>mail.kubernetes.jp</li>
+          <li><strong>ポート：</strong>587</li>
+          <li><strong>ユーザー：</strong>作成したメールアカウント<br>（例: info@kubernetes.jp）</li>
+        </ul>
+      </div>
+    </div>
   </div>
 @endsection
 
