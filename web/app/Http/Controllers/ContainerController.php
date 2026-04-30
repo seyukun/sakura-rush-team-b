@@ -39,12 +39,18 @@ class ContainerController extends Controller
         } while (Container::where('id', $containerId)->exists());
 
         // IPアドレスの生成（10.200.1.2 ~ 10.200.1.254）
-        $usedIps = Container::pluck('ip')->toArray();
+        // toBase() を使ってミューテタを通さず、データベースに保存されている生の数値(整数)をそのまま取得
+        $usedIps = Container::toBase()->pluck('ip')->toArray();
         $ip = null;
         for ($i = 2; $i <= 254; $i++) {
-            $candidate = "10.200.1.{$i}/24";
-            if (!in_array($candidate, $usedIps)) {
-                $ip = $candidate;
+            // 比較用にはサブネットマスクなしのIPを使用する
+            $candidateIp = "10.200.1.{$i}";
+            $candidateLong = ip2long($candidateIp); // 候補IPも整数に変換する
+
+            // 生の数値(整数)同士で比較する
+            if (!in_array($candidateLong, $usedIps)) {
+                // まだ使われていなければ、API送信用の /24 付きを変数にセットしてループを抜ける
+                $ip = $candidateIp . '/24';
                 break;
             }
         }
@@ -58,6 +64,18 @@ class ContainerController extends Controller
         } while (Container::where('sftp_port', $sftpPort)->exists());
 
         try {
+            // サブドメインの登録
+            $subdomainUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/register-subdomain';
+            $subdomainResponse = Http::post($subdomainUrl, [
+                'subdomain' => $subdomain,
+            ]);
+
+            if (!$subdomainResponse->successful()) {
+                $errorMessage = $subdomainResponse->json('detail') ?? 'サブドメインの登録に失敗しました。';
+                Log::error('Subdomain registration failed: ' . $subdomainResponse->body());
+                return response()->json(['success' => false, 'message' => $errorMessage], $subdomainResponse->status());
+            }
+
             // 内部APIへJSONでPOSTリクエストを送信
             $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/create-user-container';
             $response = Http::post($apiUrl, [
@@ -70,7 +88,6 @@ class ContainerController extends Controller
                 'volume_size'   => 20,
                 'sftp_port'     => $sftpPort,
                 'sftp_password' => $sftpPassword,
-                'subdomain'     => $subdomain,
             ]);
 
             if ($response->successful()) {
@@ -89,8 +106,12 @@ class ContainerController extends Controller
 
                 return response()->json(['success' => true, 'message' => 'コンテナを作成しました']);
             } else {
+                // FastAPIから返ってきたエラーメッセージ("detail")があれば取得する
+                $errorMessage = $response->json('detail') ?? 'コンテナの作成に失敗しました。サーバーの応答をご確認ください。';
                 Log::error('Container API creation failed: ' . $response->body());
-                return response()->json(['success' => false, 'message' => 'コンテナの作成に失敗しました。サーバーの応答をご確認ください。'], 500);
+                
+                // FastAPIのステータスコード(400など)をそのままフロントエンドに返す
+                return response()->json(['success' => false, 'message' => $errorMessage], $response->status());
             }
         } catch (\Exception $exception) {
             Log::error('Container API connection error: ' . $exception->getMessage());

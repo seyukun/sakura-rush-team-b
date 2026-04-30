@@ -55,10 +55,6 @@ class MailHostingController extends Controller
             return response()->json(['success' => false, 'message' => 'このメールアドレスは既に登録されています'], 400);
         }
 
-        // --- PHP自身が認識しているユーザー名とIDをログに出力 ---
-        $whoami = trim(shell_exec('whoami 2>&1'));
-        $idInfo = trim(shell_exec('id 2>&1'));
-        Log::debug("実行ユーザー名: [{$whoami}] / ID情報: [{$idInfo}]");
 
         // password.sh を呼び出してパスワードをハッシュ化
         $escapedPassword = escapeshellarg($request->password);

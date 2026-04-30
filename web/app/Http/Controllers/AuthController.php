@@ -9,6 +9,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Str;        
+use App\Models\Container;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -164,6 +167,38 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 400);
+        }
+
+        // ユーザーに紐づくコンテナが存在する場合は削除APIを呼び出して削除
+        $container = Container::where('user_id', $user->id)->first();
+        if ($container) {
+            try {
+                $apiUrl = env('INTERNAL_API_URL', 'http://127.0.0.1:9080') . '/internal/delete-user-container';
+                
+                // FastAPI側でエラーにならないよう、IPアドレスにサブネットマスク(/24)が含まれていない場合は付与する
+                $ip = $container->ip;
+                if (!str_contains($ip, '/')) {
+                    $ip .= '/24';
+                }
+
+                $response = Http::post($apiUrl, [
+                    'id'        => $container->id,
+                    'user_id'   => $container->user_id,
+                    'ip'        => $ip,
+                    'sftp_port' => $container->sftp_port,
+                ]);
+
+                if (!$response->successful()) {
+                    Log::error('Container deletion failed during account deletion for container ' . $container->id . ': ' . $response->body());
+                    // コンテナ実体の削除APIが失敗しても、DBから情報を消して退会処理を続行させるため、ここはリターンしない
+                }
+            } catch (\Exception $exception) {
+                Log::error('Container deletion process failed during account deletion: ' . $exception->getMessage());
+                // 通信エラーなどの例外が発生しても、退会処理を続行させる
+            }
+
+            // データベースからコンテナ情報を確実に削除
+            $container->delete();
         }
 
         $user->delete(); // ユーザーをデータベースから削除
