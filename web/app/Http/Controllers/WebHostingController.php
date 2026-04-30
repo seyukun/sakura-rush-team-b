@@ -28,8 +28,9 @@ class WebHostingController extends Controller
         }
 
         // 3. WP URL の自動生成
-        // ユーザーIDを使ったサブドメイン形式で kubernetes.jp を使用する
-        $wpUrl = 'http://user-' . $user->id . '.kubernetes.jp';
+        // ユーザーのsubdomainを使用して kubernetes.jp を使用する
+        $subdomain = $user->subdomain;
+        $wpUrl = 'https://' . $subdomain . '.kubernetes.jp';
 
         try {
             // 4. チームメンバーが作成した内部APIにJSONでリクエストを送信

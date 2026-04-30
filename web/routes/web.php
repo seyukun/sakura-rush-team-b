@@ -77,5 +77,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/web-hosting', function () {
         return view('web-hosting');
     })->name('web-hosting');
+    Route::get('/api/container', [ContainerController::class, 'show']);
     Route::post('/api/web-hosting/setup', [WebHostingController::class, 'setup']);
 });

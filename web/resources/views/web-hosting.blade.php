@@ -3,6 +3,14 @@
 @section('title', 'Webホスティング – Admin')
 
 @section('content')
+  <div class="card" id="hostingInfoCard" style="margin-bottom: 1.5rem; display: none;">
+    <h3 style="margin-bottom:1rem; color:#4b5563;">現在のサイト情報</h3>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <strong>サイトURL:</strong>
+        <span><a id="currentWpUrl" href="#" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;"></a></span>
+    </div>
+  </div>
+
   <h1 style="margin-bottom:1.5rem;">Webホスティング (WordPress設定)</h1>
   <p style="margin-bottom:1.5rem;">WordPressの自動セットアップを行います。以下の情報を入力してください。</p>
 
@@ -63,7 +71,6 @@
       <button type="submit" id="setupBtn" class="btn" style="background:#10b981; width: 100%;">WordPressをセットアップする</button>
       <div id="resultArea" style="margin-top: 1.5rem; display: none; padding: 1rem; border-radius: 0.25rem;">
         <p id="setupMsg" style="font-weight: bold; margin-bottom: 0.5rem;"></p>
-        <p id="wpUrlContainer" style="display: none;">URL: <a href="#" id="wpUrlLink" target="_blank" style="color: #3b82f6; text-decoration: underline;"></a></p>
       </div>
     </div>
   </form>
@@ -71,66 +78,84 @@
 
 @push('scripts')
   <script>
-    const wpSetupForm = document.getElementById('wpSetupForm');
-    const setupBtn = document.getElementById('setupBtn');
-    const resultArea = document.getElementById('resultArea');
-    const setupMsg = document.getElementById('setupMsg');
-    const wpUrlContainer = document.getElementById('wpUrlContainer');
-    const wpUrlLink = document.getElementById('wpUrlLink');
+    document.addEventListener('DOMContentLoaded', function() {
+      // --- 現在のサイト情報を取得 ---
+      const hostingInfoCard = document.getElementById('hostingInfoCard');
+      const currentWpUrl = document.getElementById('currentWpUrl');
 
-    wpSetupForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      setupBtn.disabled = true;
-      setupBtn.textContent = 'セットアップ中... しばらくお待ちください';
-      setupBtn.style.opacity = '0.7';
-      
-      resultArea.style.display = 'block';
-      resultArea.style.backgroundColor = '#eff6ff';
-      setupMsg.textContent = 'WordPressのセットアップをリクエストしています...';
-      setupMsg.style.color = '#3b82f6';
-      wpUrlContainer.style.display = 'none';
-
-      const formData = new FormData(wpSetupForm);
-      const requestData = Object.fromEntries(formData.entries());
-
-      try {
-        const response = await fetch('{{ url('/api/web-hosting/setup') }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        });
-
-        const result = await response.json();
-
-        setupMsg.textContent = result.message;
-
-        if (response.ok && result.success) {
-          resultArea.style.backgroundColor = '#ecfdf5';
-          setupMsg.style.color = '#10b981';
-          if (result.wp_url) {
-            wpUrlContainer.style.display = 'block';
-            wpUrlLink.href = result.wp_url;
-            wpUrlLink.textContent = result.wp_url;
+      fetch('{{ url('/api/container') }}')
+        .then(response => {
+          if (response.ok) { return response.json(); }
+          return null;
+        })
+        .then(data => {
+          if (data && data.wp_url) {
+            hostingInfoCard.style.display = 'block';
+            currentWpUrl.href = data.wp_url;
+            currentWpUrl.textContent = data.wp_url;
           }
-          wpSetupForm.reset();
-        } else {
+        })
+        .catch(error => console.error('Error fetching container info:', error));
+
+      // --- WordPressセットアップフォームの処理 ---
+      const wpSetupForm = document.getElementById('wpSetupForm');
+      const setupBtn = document.getElementById('setupBtn');
+      const resultArea = document.getElementById('resultArea');
+      const setupMsg = document.getElementById('setupMsg');
+
+      wpSetupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        setupBtn.disabled = true;
+        setupBtn.textContent = 'セットアップ中... しばらくお待ちください';
+        setupBtn.style.opacity = '0.7';
+        
+        resultArea.style.display = 'block';
+        resultArea.style.backgroundColor = '#eff6ff';
+        setupMsg.textContent = 'WordPressのセットアップをリクエストしています...';
+        setupMsg.style.color = '#3b82f6';
+
+        const formData = new FormData(wpSetupForm);
+        const requestData = Object.fromEntries(formData.entries());
+
+        try {
+          const response = await fetch('{{ url('/api/web-hosting/setup') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+          });
+
+          const result = await response.json();
+
+          setupMsg.textContent = result.message;
+
+          if (response.ok && result.success) {
+            resultArea.style.backgroundColor = '#ecfdf5';
+            setupMsg.style.color = '#10b981';
+            if (result.wp_url) {
+              hostingInfoCard.style.display = 'block';
+              currentWpUrl.href = result.wp_url;
+              currentWpUrl.textContent = result.wp_url;
+            }
+            wpSetupForm.reset();
+          } else {
+            resultArea.style.backgroundColor = '#fef2f2';
+            setupMsg.style.color = '#e11d48';
+          }
+        } catch (error) {
           resultArea.style.backgroundColor = '#fef2f2';
+          setupMsg.textContent = '通信エラーが発生しました';
           setupMsg.style.color = '#e11d48';
+        } finally {
+          setupBtn.disabled = false;
+          setupBtn.textContent = 'WordPressをセットアップする';
+          setupBtn.style.opacity = '1';
         }
-      } catch (error) {
-        resultArea.style.backgroundColor = '#fef2f2';
-        setupMsg.textContent = '通信エラーが発生しました';
-        setupMsg.style.color = '#e11d48';
-      } finally {
-        setupBtn.disabled = false;
-        setupBtn.textContent = 'WordPressをセットアップする';
-        setupBtn.style.opacity = '1';
-      }
+      });
     });
   </script>
 @endpush

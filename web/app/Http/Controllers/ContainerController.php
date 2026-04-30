@@ -22,12 +22,13 @@ class ContainerController extends Controller
         // フロントエンドから送信されたパスワードの検証
         $request->validate([
             'sftp_password' => 'required|string|min:8',
-            'subdomain'     => 'required|string|max:63|regex:/^[a-z0-9-]+$/', // サブドメインのバリデーション
+            'subdomain'     => 'required|string|max:63|regex:/^[a-z0-9-]+$/|unique:users,subdomain', // サブドメインのバリデーション
         ], [
             'sftp_password.required' => 'SFTPパスワードは必須です',
             'sftp_password.min' => 'SFTPパスワードは8文字以上で設定してください',
             'subdomain.required' => 'サブドメインは必須です',
             'subdomain.regex' => 'サブドメインは小文字の英数字とハイフンのみ使用できます',
+            'subdomain.unique' => 'このサブドメインは既に使用されています',
         ]);
 
         $sftpPassword = $request->sftp_password;
@@ -106,6 +107,10 @@ class ContainerController extends Controller
                     'sftp_password' => $sftpPassword,
                 ]);
 
+                // ユーザーにサブドメインを保存
+                $user->subdomain = $subdomain;
+                $user->save();
+
                 return response()->json(['success' => true, 'message' => 'コンテナを作成しました']);
             } else {
                 // FastAPIから返ってきたエラーメッセージ("detail")があれば取得する
@@ -119,5 +124,31 @@ class ContainerController extends Controller
             Log::error('Container API connection error: ' . $exception->getMessage());
             return response()->json(['success' => false, 'message' => '内部APIサーバーとの通信に失敗しました。'], 500);
         }
+    }
+
+    public function show(Request $request)
+    {
+        $user = $request->user();
+        $container = Container::where('user_id', $user->id)->first();
+
+        if (!$container) {
+            // コンテナが存在しない場合は、フロントエンドが処理しやすいように空のデータや特定のステータスを返すことも検討
+            return response()->json(['message' => 'コンテナが見つかりません。'], 404);
+        }
+
+        // ユーザー情報からサブドメインを取得
+        $subdomain = $user->subdomain;
+        $wp_url = null;
+
+        if ($subdomain) {
+            // サブドメインからWordPressのURLを構築
+            $wp_url = 'https://' . $subdomain . '.kubernetes.jp';
+        }
+
+        // コンテナ情報とWordPressのURLをJSONで返す
+        return response()->json([
+            'container' => $container,
+            'wp_url' => $wp_url,
+        ]);
     }
 }
