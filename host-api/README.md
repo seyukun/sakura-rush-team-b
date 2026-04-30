@@ -21,7 +21,8 @@ curl -sS -X POST 'http://127.0.0.1:9080/internal/create-user-container' -H 'Cont
     "mem_m":1024,
     "volume_size":20,
     "sftp_port":22023,
-    "sftp_password":"StrongPassword123!"
+    "sftp_password":"StrongPassword123!",
+    "domain": "example.kubernetes.jp"
   }'
 ```
 

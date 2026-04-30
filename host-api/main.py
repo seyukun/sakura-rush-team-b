@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 from ipaddress import IPv4Interface
 from typing import Any
@@ -40,6 +41,9 @@ USERS_DIR = os.environ.get("USERS_DIR", os.path.join(os.environ.get("HOME", "/ro
 SFTP_FIXED_USER = "sftpuser"
 WORDPRESS_UPLOADS_REL = "/var/www/html/wordpress/wp-content/"
 
+NGINX_INSERTCONF_SCRIPT_PATH = "./shell_scripts/nginx-insertconf.sh"
+NGINX_INSERTCONF_TIMEOUT_SEC = 30
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
@@ -76,6 +80,16 @@ class CreateUserContainerRequest(BaseModel):
 
     # containers.sftp_password = VARCHAR(255) NOT NULL
     sftp_password: str = Field(min_length=1, max_length=255)
+
+    # domain
+    domain: str = Field(min_length=1, max_length=253)
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        if not re.fullmatch(r"[A-Za-z0-9.-]+", v):
+            raise ValueError("domain contains invalid characters")
+        return v
 
     @field_validator("ip")
     @classmethod
@@ -509,6 +523,27 @@ def run_create_container_script(payload: CreateUserContainerRequest) -> dict[str
     except json.JSONDecodeError:
         data = {"ok": True, "raw": stdout}
 
+    nginx_result = run_nginx_insertconf_script(
+            domain=payload.domain,
+            ip=payload.ip,
+            container_id=payload.id,
+    )
+
+    if isinstance(nginx_result, JSONResponse):
+        return error_json_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="post_create_hook_failed",
+            id=payload.id,
+            stage="nginx_insertconf",
+            message="container was created, but nginx config insertion failed",
+            script={"create_result": data},
+        )
+
+    if isinstance(data, dict):
+        data["domain"] = payload.domain
+        data["nginx"] = nginx_result
+
+
     return data
 
 
@@ -814,6 +849,104 @@ def run_delete_container_script(payload: DeleteUserContainerRequest) -> dict[str
     return data
 
 
+def run_nginx_insertconf_script(domain: str, ip: str, container_id: str) -> dict[str, Any] | JSONResponse:
+    if not os.path.isfile(NGINX_INSERTCONF_SCRIPT_PATH) or not os.access(NGINX_INSERTCONF_SCRIPT_PATH, os.X_OK):
+        return error_json_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="script_not_executable",
+            id=container_id,
+            stage="nginx_insertconf",
+            message=f"script_not_executable: {NGINX_INSERTCONF_SCRIPT_PATH}",
+        )
+
+    # create の payload.ip は CIDR 付き (例: 10.200.1.20/24) なので、素のIPにする
+    ip_no_cidr = ip.split("/", 1)[0]
+
+    cmd = [
+        NGINX_INSERTCONF_SCRIPT_PATH,
+        domain,
+        ip_no_cidr,
+    ]
+
+    logger.info(
+        "nginx_insertconf start id=%s domain=%s ip=%s script=%s",
+        container_id,
+        domain,
+        ip_no_cidr,
+        NGINX_INSERTCONF_SCRIPT_PATH,
+    )
+
+    try:
+        completed = subprocess.run(
+            cmd,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=NGINX_INSERTCONF_TIMEOUT_SEC,
+            check=False,
+            env={
+                "PATH": "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin",
+                "HOME": os.environ.get("HOME", "/root"),
+                "LANG": "C",
+            },
+        )
+    except subprocess.TimeoutExpired as e:
+        logger.error("nginx_insertconf timeout id=%s stderr=%s", container_id, e.stderr)
+        return error_json_response(
+            status.HTTP_504_GATEWAY_TIMEOUT,
+            error="script_timeout",
+            id=container_id,
+            stage="nginx_insertconf",
+            message="nginx insertconf timed out",
+            stderr=(e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr) if e.stderr else None,
+            stdout=(e.stdout.decode() if isinstance(e.stdout, bytes) else e.stdout) if e.stdout else None,
+        )
+    except OSError as e:
+        logger.exception("failed to start nginx_insertconf script")
+        return error_json_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="failed_to_start_script",
+            id=container_id,
+            stage="nginx_insertconf",
+            message=str(e),
+        )
+
+    stdout = (completed.stdout or "").strip()
+    stderr = (completed.stderr or "").strip()
+
+    logger.info(
+        "nginx_insertconf finish id=%s exit_code=%s stderr=%s",
+        container_id,
+        completed.returncode,
+        stderr[:1000],
+    )
+
+    if completed.returncode != 0:
+        return error_json_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="script_failed",
+            id=container_id,
+            stage="nginx_insertconf",
+            exit_code=completed.returncode,
+            stdout=stdout or None,
+            stderr=stderr or None,
+        )
+
+    result: dict[str, Any]
+    try:
+        result = json.loads(stdout) if stdout else {"ok": True}
+    except json.JSONDecodeError:
+        result = {
+            "ok": True,
+            "domain": domain,
+            "ip": ip_no_cidr,
+            "raw": stdout,
+        }
+
+    return result
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, bool]:
     return {"ok": True}
@@ -864,6 +997,7 @@ def delete_user_container(
     enforce_local_only(request)
     return run_delete_container_script(payload)
 
+
 @app.post("/internal/register-subdomain")
 async def register_subdomain(req: SubdomainRequest):
     print(f"--- Received request: Subdomain={req.subdomain} ---")
@@ -878,3 +1012,4 @@ async def register_subdomain(req: SubdomainRequest):
         error_msg = e.stderr.strip() if e.stderr else "サブドメインの登録に失敗しました。既に使われている可能性があります。"
         print(f"[ERROR] Subdomain registration failed with code {e.returncode}: {error_msg}")
         raise HTTPException(status_code=400, detail=error_msg)
+
