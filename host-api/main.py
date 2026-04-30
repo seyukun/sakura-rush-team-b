@@ -161,6 +161,10 @@ class DeleteUserContainerRequest(BaseModel):
         return v
 
 
+class SubdomainRequest(BaseModel):
+    subdomain: str
+
+
 def run_forward_http_script(payload: PortForwardRequest) -> dict[str, Any]:
     if not os.path.isfile(FORWARD_HTTP_SCRIPT_PATH) or not os.access(FORWARD_HTTP_SCRIPT_PATH, os.X_OK):
         raise HTTPException(
@@ -860,3 +864,17 @@ def delete_user_container(
     enforce_local_only(request)
     return run_delete_container_script(payload)
 
+@app.post("/internal/register-subdomain")
+async def register_subdomain(req: SubdomainRequest):
+    print(f"--- Received request: Subdomain={req.subdomain} ---")
+
+    dns_script = "/home/ubuntu/dns/register.sh"
+    try:
+        print(f"[INFO] Registering subdomain {req.subdomain}...")
+        subprocess.run(["bash", dns_script, req.subdomain], check=True, capture_output=True, text=True)
+        print(f"[SUCCESS] Subdomain {req.subdomain} registered.")
+        return {"success": True, "message": "サブドメインの登録が完了しました"}
+    except subprocess.CalledProcessError as e:
+        error_msg = e.stderr.strip() if e.stderr else "サブドメインの登録に失敗しました。既に使われている可能性があります。"
+        print(f"[ERROR] Subdomain registration failed with code {e.returncode}: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)

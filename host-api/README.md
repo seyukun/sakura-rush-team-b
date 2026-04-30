@@ -50,7 +50,7 @@ curl -sS \
   }'
 ```
 
-## Port Forward
+## forward-http
 
 ```
 curl -sS \
@@ -63,7 +63,7 @@ curl -sS \
   }'
 ```
 
-## SFTP Password Change
+## sftp-passwd-change
 
 ```
 curl -sS \
@@ -75,7 +75,7 @@ curl -sS \
   }'
 ```
 
-## Delete User Container
+## delete-user-container
 
 ```
 curl -sS \
@@ -86,5 +86,16 @@ curl -sS \
     "user_id":8,
     "ip":"10.200.1.30/24",
     "sftp_port":22023
+  }'
+```
+
+## register-subdomain
+
+```
+curl -sS \
+  -X POST 'http://127.0.0.1:9080/internal/register-subdomain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "subdomain":"your-new-subdomain"
   }'
 ```
